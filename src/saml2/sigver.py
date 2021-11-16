@@ -9,12 +9,19 @@ import logging
 import os
 import re
 import six
+import sys
 from uuid import uuid4 as gen_random_key
 from time import mktime
 from tempfile import NamedTemporaryFile
 from subprocess import Popen
 from subprocess import PIPE
-from importlib_resources import path as _resource_path
+
+# importlib.resources was introduced in python 3.7
+# files API from importlib.resources introduced in python 3.9
+if sys.version_info[:2] >= (3, 9):
+    from importlib.resources import files as _resource_files
+else:
+    from importlib_resources import files as _resource_files
 
 from OpenSSL import crypto
 
@@ -33,14 +40,11 @@ from saml2 import extension_elements_to_elements
 from saml2 import class_name
 from saml2 import saml
 from saml2 import ExtensionElement
-from saml2 import VERSION
 from saml2.cert import OpenSSLWrapper
 from saml2.extension import pefim
 from saml2.extension.pefim import SPCertEnc
 from saml2.saml import EncryptedAssertion
-from saml2.s_utils import sid
 from saml2.s_utils import Unsupported
-from saml2.time_util import instant
 from saml2.time_util import str_to_time
 from saml2.xmldsig import ALLOWED_CANONICALIZATIONS
 from saml2.xmldsig import ALLOWED_TRANSFORMS
@@ -1304,8 +1308,8 @@ class SecurityContext(object):
         self.only_use_keys_in_metadata = only_use_keys_in_metadata
 
         if not template:
-            with _resource_path(_data_template, "template_enc.xml") as fp:
-                self.template = str(fp)
+            fp = str(_resource_files(_data_template).joinpath("template_enc.xml"))
+            self.template = str(fp)
         else:
             self.template = template
 
@@ -1447,7 +1451,7 @@ class SecurityContext(object):
                 _certs = []
             certs = []
 
-            for cert in _certs:
+            for cert_name, cert in _certs:
                 if isinstance(cert, six.string_types):
                     content = pem_format(cert)
                     tmp = make_temp(content,
@@ -1492,6 +1496,7 @@ class SecurityContext(object):
         except XMLSchemaError as e:
             error_context = {
                 "message": "Signature verification failed. Invalid document format.",
+                "reason": str(e),
                 "ID": item.id,
                 "issuer": _issuer,
                 "type": node_name,
@@ -1938,7 +1943,7 @@ def pre_encryption_part(
     *,
     msg_enc=TRIPLE_DES_CBC,
     key_enc=RSA_OAEP_MGF1P,
-    key_name='my-rsa-key',
+    key_name=None,
     encrypted_key_id=None,
     encrypted_data_id=None,
     encrypt_cert=None,
@@ -1953,9 +1958,11 @@ def pre_encryption_part(
         if encrypt_cert
         else None
     )
-    key_info = ds.KeyInfo(
-        key_name=ds.KeyName(text=key_name),
-        x509_data=x509_data,
+    key_name = ds.KeyName(text=key_name) if key_name else None
+    key_info = (
+        ds.KeyInfo(key_name=key_name, x509_data=x509_data)
+        if key_name or x509_data
+        else None
     )
 
     encrypted_key = EncryptedKey(

@@ -30,7 +30,6 @@ from saml2.saml import NameID
 from saml2.saml import EncryptedAssertion
 from saml2.saml import Issuer
 from saml2.saml import NAMEID_FORMAT_ENTITY
-from saml2.response import AuthnResponse
 from saml2.response import LogoutResponse
 from saml2.response import UnsolicitedResponse
 from saml2.time_util import instant
@@ -683,11 +682,11 @@ class Entity(HTTPBase):
         _certs = []
 
         if encrypt_cert:
-            _certs.append(encrypt_cert)
+            _certs.append((None, encrypt_cert))
         elif sp_entity_id is not None:
             _certs = self.metadata.certs(sp_entity_id, "any", "encryption")
         exception = None
-        for _cert in _certs:
+        for _cert_name, _cert in _certs:
             wrapped_cert, unwrapped_cert = get_pem_wrapped_unwrapped(_cert)
             try:
                 tmp = make_temp(
@@ -698,7 +697,9 @@ class Entity(HTTPBase):
                 response = self.sec.encrypt_assertion(
                     response,
                     tmp.name,
-                    pre_encryption_part(encrypt_cert=unwrapped_cert),
+                    pre_encryption_part(
+                        key_name=_cert_name, encrypt_cert=unwrapped_cert
+                    ),
                     node_xpath=node_xpath,
                 )
                 return response
@@ -1023,7 +1024,16 @@ class Entity(HTTPBase):
                 else:
                     return typ
 
-    def _parse_request(self, enc_request, request_cls, service, binding):
+    def _parse_request(
+        self,
+        enc_request,
+        request_cls,
+        service,
+        binding,
+        relay_state=None,
+        sigalg=None,
+        signature=None,
+    ):
         """Parse a Request
 
         :param enc_request: The request in its transport format
@@ -1038,8 +1048,7 @@ class Entity(HTTPBase):
         _log_debug = logger.debug
 
         # The addresses I should receive messages like this on
-        receiver_addresses = self.config.endpoint(service, binding,
-                                                  self.entity_type)
+        receiver_addresses = self.config.endpoint(service, binding, self.entity_type)
         if not receiver_addresses and self.entity_type == "idp":
             for typ in ["aa", "aq", "pdp"]:
                 receiver_addresses = self.config.endpoint(service, binding, typ)
@@ -1069,7 +1078,9 @@ class Entity(HTTPBase):
         if only_valid_cert:
             must = True
         _request = _request.loads(xmlstr, binding, origdoc=enc_request,
-                                  must=must, only_valid_cert=only_valid_cert)
+                                  must=must, only_valid_cert=only_valid_cert,
+                                  relay_state=relay_state, sigalg=sigalg,
+                                  signature=signature)
 
         _log_debug("Loaded request")
 
@@ -1573,7 +1584,14 @@ class Entity(HTTPBase):
 
     # ------------------------------------------------------------------------
 
-    def parse_logout_request(self, xmlstr, binding=BINDING_SOAP):
+    def parse_logout_request(
+        self,
+        xmlstr,
+        binding=BINDING_SOAP,
+        relay_state=None,
+        sigalg=None,
+        signature=None,
+    ):
         """ Deal with a LogoutRequest
 
         :param xmlstr: The response as a xml string
@@ -1583,8 +1601,15 @@ class Entity(HTTPBase):
             was not.
         """
 
-        return self._parse_request(xmlstr, saml_request.LogoutRequest,
-                                   "single_logout_service", binding)
+        return self._parse_request(
+            enc_request=xmlstr,
+            request_cls=saml_request.LogoutRequest,
+            service="single_logout_service",
+            binding=binding,
+            relay_state=relay_state,
+            sigalg=sigalg,
+            signature=signature,
+        )
 
     def use_artifact(self, message, endpoint_index=0):
         """
