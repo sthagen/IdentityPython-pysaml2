@@ -6,7 +6,6 @@ import six
 """Contains classes and functions that a SAML2.0 Service Provider (SP) may use
 to conclude its tasks.
 """
-from saml2.request import LogoutRequest
 import saml2
 
 from saml2 import saml, SAMLError
@@ -129,20 +128,31 @@ class Saml2Client(Base):
         """
 
         expected_binding = binding
+        bindings_to_try = (
+            [BINDING_HTTP_REDIRECT, BINDING_HTTP_POST]
+            if not expected_binding
+            else [expected_binding]
+        )
 
-        for binding in [BINDING_HTTP_REDIRECT, BINDING_HTTP_POST]:
-            if expected_binding and binding != expected_binding:
-                continue
+        binding_destinations = []
+        unsupported_bindings = []
+        for binding in bindings_to_try:
+            try:
+                destination = self._sso_location(entityid, binding)
+            except Exception:
+                unsupported_bindings.append(binding)
+            else:
+                binding_destinations.append((binding, destination))
 
-            destination = self.sso_location(entityid, binding)
+        for binding, destination in binding_destinations:
             logger.info("destination to provider: %s", destination)
 
             # XXX - sign_post will embed the signature to the xml doc
             # XXX   ^through self.create_authn_request(...)
             # XXX - sign_redirect will add the signature to the query params
             # XXX   ^through self.apply_binding(...)
-            sign_post = False if binding == BINDING_HTTP_REDIRECT else sign
-            sign_redirect = False if binding == BINDING_HTTP_POST and sign else sign
+            sign_redirect = sign and binding == BINDING_HTTP_REDIRECT
+            sign_post = sign and not sign_redirect
 
             reqid, request = self.create_authn_request(
                 destination=destination,
@@ -172,7 +182,12 @@ class Saml2Client(Base):
 
             return reqid, binding, http_info
         else:
-            raise SignOnError("No supported bindings available for authentication")
+            error_context = {
+                "message": "No supported bindings available for authentication",
+                "bindings_to_try": bindings_to_try,
+                "unsupported_bindings": unsupported_bindings,
+            }
+            raise SignOnError(error_context)
 
     def global_logout(
         self,
@@ -302,10 +317,8 @@ class Saml2Client(Base):
                 session_indexes = None
 
             sign = sign if sign is not None else self.logout_requests_signed
-            sign_post = sign and (
-                binding == BINDING_HTTP_POST or binding == BINDING_SOAP
-            )
             sign_redirect = sign and binding == BINDING_HTTP_REDIRECT
+            sign_post = sign and not sign_redirect
 
             log_report = {
                 "message": "Invoking SLO on entity",

@@ -278,3 +278,64 @@ def test_filter_ava_required_attributes_with_no_friendly_name():
 
     ava = policy.filter(ava, entity_id, required=required, optional=optional)
     assert _eq(list(ava.keys()), ["eduPersonTargetedID"])
+
+
+def test_filter_ava_esi_coco():
+    entity_id = "https://esi-coco.example.edu/saml2/metadata/"
+    mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
+    mds.imp(
+        [
+            {
+                "class": "saml2.mdstore.MetaDataFile",
+                "metadata": [(full_path("entity_esi_and_coco_sp.xml"),)]
+            }
+        ]
+    )
+
+    policy_conf = {
+        "default": {
+            "lifetime": {"minutes": 15},
+            "entity_categories": ["swamid"]
+        }
+    }
+
+    policy = Policy(policy_conf, mds)
+
+    ava = {
+        "givenName": ["Test"],
+        "sn": ["Testsson"],
+        "mail": ["test@example.com"],
+        "c": ["SE"],
+        "schacHomeOrganization": ["example.com"],
+        "eduPersonScopedAffiliation": ["student@example.com"],
+        "schacPersonalUniqueCode": [
+            "urn:schac:personalUniqueCode:int:esi:ladok.se:externtstudentuid-00000000-1111-2222-3333-444444444444"
+        ]
+    }
+
+    requested_attributes = [
+        {
+            'friendly_name': 'eduPersonScopedAffiliation',
+            'name': '1.3.6.1.4.1.5923.1.1.1.9',
+            'name_format': NAME_FORMAT_URI,
+            'is_required': 'true'
+        },
+        {
+            'friendly_name': 'schacHomeOrganization',
+            'name': '1.3.6.1.4.1.25178.1.2.9',
+            'name_format': NAME_FORMAT_URI,
+            'is_required': 'true'
+        }
+    ]
+
+    ava = policy.filter(ava, entity_id, required=requested_attributes)
+
+    assert _eq(list(ava.keys()), [
+        'eduPersonScopedAffiliation',
+        'schacHomeOrganization',
+        'schacPersonalUniqueCode'
+    ])
+    assert _eq(ava["eduPersonScopedAffiliation"], ["student@example.com"])
+    assert _eq(ava["schacHomeOrganization"], ["example.com"])
+    assert _eq(ava["schacPersonalUniqueCode"],
+               ["urn:schac:personalUniqueCode:int:esi:ladok.se:externtstudentuid-00000000-1111-2222-3333-444444444444"])
