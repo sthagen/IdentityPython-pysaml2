@@ -15,6 +15,8 @@
 
 
 import base64
+from datetime import date
+from datetime import datetime
 
 from saml2.validate import valid_ipv4, MustValueError
 from saml2.validate import valid_ipv6
@@ -307,6 +309,11 @@ class AttributeValueBase(SamlBase):
                 }[str(x).lower()],
                 'to_text': lambda x: str(x).lower(),
             },
+            'date': {
+                'type': date,
+                'to_type': lambda x: datetime.strptime(x, '%Y-%m-%d').date(),
+                'to_text': str,
+            },
             'base64Binary': {
                 'type': str,
                 'to_type': str,
@@ -327,9 +334,10 @@ class AttributeValueBase(SamlBase):
         }
 
         xsd_string = (
-            'base64Binary' if base64encode
-            else self.get_type()
-            or type_to_xsd.get(type(value)))
+            'base64Binary'
+            if base64encode
+            else self.get_type() or type_to_xsd.get(type(value))
+        )
 
         xsd_ns, xsd_type = (
             ['', type(None)] if xsd_string is None
@@ -340,7 +348,10 @@ class AttributeValueBase(SamlBase):
             ] if ':' not in xsd_string
             else xsd_string.split(':', 1))
 
-        xsd_type_props = xsd_types_props.get(xsd_type, {})
+        xsd_type_props = xsd_types_props.get(xsd_type)
+        if not xsd_type_props:
+            xsd_type_props = xsd_types_props.get("string")
+
         valid_type = xsd_type_props.get('type', type(None))
         to_type = xsd_type_props.get('to_type', str)
         to_text = xsd_type_props.get('to_text', str)
