@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import datetime
 import os
 import re
@@ -12,12 +11,9 @@ from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_SOAP
 from saml2 import config
-from saml2 import md
-from saml2 import saml
 from saml2 import sigver
 from saml2.attribute_converter import ac_factory
 from saml2.attribute_converter import d_to_local_name
-from saml2.mdstore import MetaDataMDX
 from saml2.mdstore import MetadataStore
 from saml2.mdstore import locations
 from saml2.mdstore import name
@@ -117,7 +113,7 @@ def _eq(l1, l2):
 def _fix_valid_until(xmlstring):
     new_date = datetime.datetime.now() + datetime.timedelta(days=1)
     new_date = new_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-    return re.sub(r' validUntil=".*?"', ' validUntil="%s"' % new_date, xmlstring)
+    return re.sub(r' validUntil=".*?"', f' validUntil="{new_date}"', xmlstring)
 
 
 def test_swami_1():

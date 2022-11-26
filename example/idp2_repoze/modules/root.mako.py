@@ -1,4 +1,3 @@
-# -*- encoding:utf-8 -*-
 from mako import runtime, filters, cache
 
 UNDEFINED = runtime.UNDEFINED
@@ -76,7 +75,6 @@ def render_css_link(context, path, media=""):
             __M_writer('" media="')
             __M_writer(unicode(media))
             __M_writer('">\n')
-            pass
         # SOURCE LINE 6
         __M_writer("    ")
         self.seen_css.add(path)

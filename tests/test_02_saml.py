@@ -1,15 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 
 """Tests for saml2.saml"""
 
 __author__ = "roland.hedberg@adm.umu.se (Roland Hedberg)"
 
-try:
-    from xml.etree import ElementTree
-except ImportError:
-    from elementtree import ElementTree
 
 import ds_data
 from pytest import raises
@@ -1101,7 +1096,6 @@ class TestEvidence:
     def testUsingTestData(self):
         """Test evidence_from_string() using test data"""
         # TODO:
-        pass
 
 
 class TestAuthzDecisionStatement:
@@ -1126,7 +1120,6 @@ class TestAuthzDecisionStatement:
     def testUsingTestData(self):
         """Test authz_decision_statement_from_string() using test data"""
         # TODO:
-        pass
 
 
 class TestAdvice:
@@ -1149,7 +1142,6 @@ class TestAdvice:
     def testUsingTestData(self):
         """Test advice_from_string() using test data"""
         # TODO:
-        pass
 
 
 class TestAssertion:
@@ -1190,7 +1182,6 @@ class TestAssertion:
     def testUsingTestData(self):
         """Test assertion_from_string() using test data"""
         # TODO
-        pass
 
 
 if __name__ == "__main__":

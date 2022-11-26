@@ -5,7 +5,6 @@ from mechanize import ParseResponseEx
 from mechanize._form import AmbiguityError
 from mechanize._form import ControlNotFoundError
 from mechanize._form import ListControl
-import six
 from urlparse import urlparse
 
 
@@ -164,7 +163,7 @@ def pick_form(response, content, url=None, **kwargs):
                         _default = _ava["value"]
                         try:
                             orig_val = form[prop]
-                            if isinstance(orig_val, six.string_types):
+                            if isinstance(orig_val, str):
                                 if orig_val == _default:
                                     _form = form
                             elif _default in orig_val:
@@ -213,9 +212,7 @@ def do_click(client, form, **kwargs):
                     else:
                         _nr += 1
                 except ControlNotFoundError:
-                    raise Exception(
-                        "No submit control with the name='%s' and " "value='%s' could be found" % (_name, _val)
-                    )
+                    raise Exception(f"No submit control with the name='{_name}' and value='{_val}' could be found")
     else:
         request = form.click()
 
@@ -295,7 +292,7 @@ def chose(client, orig_response, content, path, **kwargs):
             _url = kwargs["location"]
 
         part = urlparse(_url)
-        url = "%s://%s%s" % (part[0], part[1], path)
+        url = f"{part[0]}://{part[1]}{path}"
     else:
         url = path
 
@@ -339,7 +336,7 @@ def interaction(args):
 # ========================================================================
 
 
-class Operation(object):
+class Operation:
     def __init__(self, conv, args=None, features=None):
         if args:
             self.function = interaction(args)

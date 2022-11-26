@@ -1,14 +1,14 @@
 import calendar
 import copy
+import http.cookiejar as http_cookiejar
+from http.cookies import SimpleCookie
 import logging
 import re
 import time
+from urllib.parse import urlencode
+from urllib.parse import urlparse
 
 import requests
-from six.moves import http_cookiejar
-from six.moves.http_cookies import SimpleCookie
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.parse import urlparse
 
 from saml2 import SAMLError
 from saml2 import class_name
@@ -80,7 +80,7 @@ def _since_epoch(cdate):
             break
 
     if t == -1:
-        err = 'ValueError: Date "{0}" does not match any of: {1}'.format(cdate, TIME_FORMAT)
+        err = f'ValueError: Date "{cdate}" does not match any of: {TIME_FORMAT}'
         raise Exception(err)
 
     return calendar.timegm(t)
@@ -94,7 +94,7 @@ def dict2set_list(dic):
     return [(k, v) for k, v in dic.items()]
 
 
-class HTTPBase(object):
+class HTTPBase:
     def __init__(self, verify=True, ca_bundle=None, key_file=None, cert_file=None, http_client_timeout=None):
         self.request_args = {"allow_redirects": False}
         # self.cookies = {}
@@ -134,7 +134,7 @@ class HTTPBase(object):
                     # print(cookie)
                     if cookie.expires and cookie.expires <= now:
                         continue
-                    if not re.search("%s$" % cookie.domain, _domain):
+                    if not re.search(f"{cookie.domain}$", _domain):
                         continue
                     if not re.match(cookie.path, part.path):
                         continue
@@ -233,7 +233,7 @@ class HTTPBase(object):
             r = requests.request(method, url, **_kwargs)
             logger.debug("Response status: %s", r.status_code)
         except requests.ConnectionError as exc:
-            raise ConnectionError("%s" % exc)
+            raise ConnectionError(f"{exc}")
 
         try:
             self.set_cookie(SimpleCookie(r.headers["set-cookie"]), r)
@@ -250,7 +250,7 @@ class HTTPBase(object):
             query = urlencode({"SAMLart": message, "RelayState": relay_state})
         else:
             query = urlencode({"SAMLart": message})
-        info = {"data": "", "url": "%s?%s" % (destination, query)}
+        info = {"data": "", "url": f"{destination}?{query}"}
         return info
 
     @staticmethod
@@ -274,7 +274,7 @@ class HTTPBase(object):
                 query = urlencode({"ID": message, "RelayState": relay_state})
             else:
                 query = urlencode({"ID": message})
-            info = {"data": "", "url": "%s?%s" % (destination, query)}
+            info = {"data": "", "url": f"{destination}?{query}"}
         else:
             raise NotImplementedError
 

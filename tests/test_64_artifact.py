@@ -1,9 +1,8 @@
 import base64
 from contextlib import closing
 from hashlib import sha1
-
-from six.moves.urllib.parse import parse_qs
-from six.moves.urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_POST
@@ -177,7 +176,7 @@ def test_artifact_flow():
             },
             name_id=name_id,
             authn=AUTHN,
-            **resp_args
+            **resp_args,
         )
 
         print(response)
@@ -190,7 +189,7 @@ def test_artifact_flow():
             "single_sign_on_service", [BINDING_HTTP_ARTIFACT], entity_id=idp.config.entityid
         )
 
-        hinfo = sp.apply_binding(binding, "%s" % artifact, destination, relay_state, response=True)
+        hinfo = sp.apply_binding(binding, f"{artifact}", destination, relay_state, response=True)
 
         # ========== SP =========
 

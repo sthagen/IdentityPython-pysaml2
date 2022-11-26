@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 def _key(prefix, name):
-    return "%s_%s" % (prefix, name)
+    return f"{prefix}_{name}"
 
 
-class Cache(object):
+class Cache:
     def __init__(self, servers, debug=0):
         self._cache = memcache.Client(servers, debug)
 
@@ -57,7 +57,7 @@ class Cache(object):
 
         res = {}
         oldees = []
-        for (entity_id, item) in self._cache.get_multi(entities, subject_id + "_").items():
+        for (entity_id, item) in self._cache.get_multi(entities, f"{subject_id}_").items():
             try:
                 info = self.get_info(item)
             except TooOld:

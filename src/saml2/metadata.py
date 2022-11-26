@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import six
 
 from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_HTTP_REDIRECT
@@ -153,7 +152,7 @@ def do_organization_info(ava):
     for dkey, (ckey, klass) in ORG_ATTR_TRANSL.items():
         if ckey not in ava:
             continue
-        if isinstance(ava[ckey], six.string_types):
+        if isinstance(ava[ckey], str):
             setattr(org, dkey, [_localized_name(ava[ckey], klass)])
         elif isinstance(ava[ckey], list):
             setattr(org, dkey, [_localized_name(n, klass) for n in ava[ckey]])
@@ -210,7 +209,7 @@ def do_requested_attribute(attributes, acs, is_required="false", name_format=NAM
     for attr in attributes:
         attr = from_local_name(acs, attr, name_format)
         args = {}
-        if isinstance(attr, six.string_types):
+        if isinstance(attr, str):
             args["name"] = attr
         else:
             for key in attr.keyswv():
@@ -231,7 +230,7 @@ def do_uiinfo(_uiinfo):
 
         aclass = uii.child_class(attr)
         inst = getattr(uii, attr)
-        if isinstance(val, six.string_types):
+        if isinstance(val, str):
             ainst = aclass(text=val)
             inst.append(ainst)
         elif isinstance(val, dict):
@@ -241,7 +240,7 @@ def do_uiinfo(_uiinfo):
             inst.append(ainst)
         else:
             for value in val:
-                if isinstance(value, six.string_types):
+                if isinstance(value, str):
                     ainst = aclass(text=value)
                     inst.append(ainst)
                 elif isinstance(value, dict):
@@ -277,11 +276,11 @@ def do_uiinfo(_uiinfo):
         _attr = "keywords"
         val = _uiinfo[_attr]
         inst = getattr(uii, _attr)
-        # list of six.string_types, dictionary or list of dictionaries
+        # list of strings, bytes, dictionary or list of dictionaries
         if isinstance(val, list):
             for value in val:
                 keyw = mdui.Keywords()
-                if isinstance(value, six.string_types):
+                if isinstance(value, str):
                     keyw.text = value
                 elif isinstance(value, dict):
                     keyw.text = " ".join(value["text"])
@@ -352,7 +351,7 @@ DEFAULT_BINDING = {
 
 def do_extensions(mname, item):
     try:
-        _mod = __import__("saml2.extension.%s" % mname, globals(), locals(), mname)
+        _mod = __import__(f"saml2.extension.{mname}", globals(), locals(), mname)
     except ImportError:
         return None
     else:
@@ -369,7 +368,7 @@ def _do_nameid_format(cls, conf, typ):
     if not name_id_format:
         return
 
-    if isinstance(name_id_format, six.string_types):
+    if isinstance(name_id_format, str):
         name_id_format = [name_id_format]
 
     formats = [md.NameIDFormat(text=format) for format in name_id_format]
@@ -384,7 +383,7 @@ def do_endpoints(conf, endpoints):
             servs = []
             i = 1
             for args in conf[endpoint]:
-                if isinstance(args, six.string_types):  # Assume it's the location
+                if isinstance(args, str):  # Assume it's the location
                     args = {"location": args, "binding": DEFAULT_BINDING[endpoint]}
                 elif isinstance(args, tuple) or isinstance(args, list):
                     if len(args) == 2:  # (location, binding)
@@ -394,7 +393,7 @@ def do_endpoints(conf, endpoints):
 
                 if indexed:
                     if "index" not in args:
-                        args["index"] = "%d" % i
+                        args["index"] = f"{int(i)}"
                         i += 1
                     else:
                         try:
@@ -520,7 +519,7 @@ def do_spsso_descriptor(conf, cert=None, enc_cert=None):
             if val is None:
                 setattr(spsso, key, DEFAULT[key])  # default ?!
             else:
-                strval = "{0:>s}".format(str(val))
+                strval = f"{str(val):>s}"
                 setattr(spsso, key, strval.lower())
         except KeyError:
             setattr(spsso, key, DEFAULTS[key])
@@ -568,7 +567,7 @@ def do_idpsso_descriptor(conf, cert=None, enc_cert=None):
             if val is None:
                 setattr(idpsso, key, DEFAULT[key])
             else:
-                setattr(idpsso, key, ("%s" % val).lower())
+                setattr(idpsso, key, (f"{val}").lower())
         except KeyError:
             setattr(idpsso, key, DEFAULTS[key])
 
@@ -765,14 +764,14 @@ def entities_descriptor(eds, valid_for, name, ident, sign, secc, sign_alg=None, 
             ident = sid()
 
         if not secc.key_file:
-            raise SAMLError("If you want to do signing you should define " + "a key to sign with")
+            raise SAMLError(f"If you want to do signing you should define a key to sign with")
 
         if not secc.my_cert:
-            raise SAMLError("If you want to do signing you should define " + "where your public key are")
+            raise SAMLError(f"If you want to do signing you should define where your public key are")
 
         entities.signature = pre_signature_part(ident, secc.my_cert, 1, sign_alg=sign_alg, digest_alg=digest_alg)
         entities.id = ident
-        xmldoc = secc.sign_statement("%s" % entities, class_name(entities))
+        xmldoc = secc.sign_statement(f"{entities}", class_name(entities))
         entities = md.entities_descriptor_from_string(xmldoc)
     else:
         xmldoc = None
@@ -794,6 +793,6 @@ def sign_entity_descriptor(edesc, ident, secc, sign_alg=None, digest_alg=None):
 
     edesc.signature = pre_signature_part(ident, secc.my_cert, 1, sign_alg=sign_alg, digest_alg=digest_alg)
     edesc.id = ident
-    xmldoc = secc.sign_statement("%s" % edesc, class_name(edesc))
+    xmldoc = secc.sign_statement(f"{edesc}", class_name(edesc))
     edesc = md.entity_descriptor_from_string(xmldoc)
     return edesc, xmldoc

@@ -1,15 +1,9 @@
 #!/usr/bin/env pythony
-# -*- coding: utf-8 -*-
 #
 
 """Tests for saml2.samlp"""
 
 __author__ = "roland.hedberg@adm.umu.se (Roland Hedberg)"
-
-try:
-    from xml.etree import ElementTree
-except ImportError:
-    from elementtree import ElementTree
 
 import samlp_data
 
@@ -58,7 +52,6 @@ class TestStatusDetail:
     def testAccessors(self):
         """Test for StatusDetail accessors"""
         # TODO:
-        pass
 
 
 class TestStatusMessage:
@@ -68,7 +61,6 @@ class TestStatusMessage:
     def testAccessors(self):
         """Test for StatusMessage accessors"""
         # TODO:
-        pass
 
 
 class TestStatusCode:
@@ -187,7 +179,6 @@ class TestResponse:
     def testUsingTestData(self):
         """Test for response_from_string() using test data"""
         # TODO:
-        pass
 
 
 class TestNameIDPolicy:

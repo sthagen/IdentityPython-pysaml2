@@ -1,7 +1,6 @@
 from contextlib import closing
-
-from six.moves.urllib.parse import parse_qs
-from six.moves.urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_SOAP
@@ -16,8 +15,6 @@ from saml2.saml import NAMEID_FORMAT_TRANSIENT
 from saml2.saml import NameID
 from saml2.saml import Subject
 from saml2.samlp import AuthnQuery
-from saml2.samlp import AuthnRequest
-from saml2.samlp import NameIDPolicy
 from saml2.server import Server
 
 
@@ -88,7 +85,7 @@ def test_flow():
             authn=AUTHN,
         )
 
-        hinfo = idp.apply_binding(binding, "%s" % resp, destination, relay_state)
+        hinfo = idp.apply_binding(binding, f"{resp}", destination, relay_state)
 
         # ------- @SP ----------
 
@@ -110,7 +107,7 @@ def test_flow():
         assert isinstance(aq, AuthnQuery)
         binding = BINDING_SOAP
 
-        hinfo = sp.apply_binding(binding, "%s" % aq, destination, "state2")
+        hinfo = sp.apply_binding(binding, f"{aq}", destination, "state2")
 
         # -------- @IDP ----------
 
@@ -125,7 +122,7 @@ def test_flow():
 
         print(p_res)
 
-        hinfo = idp.apply_binding(binding, "%s" % p_res, "", "state2", response=True)
+        hinfo = idp.apply_binding(binding, f"{p_res}", "", "state2", response=True)
 
         # ------- @SP ----------
 

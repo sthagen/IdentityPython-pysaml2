@@ -5,11 +5,13 @@ and SAML2 attribute aggregations as metadata collector in your
 WSGI application.
 
 """
+from io import StringIO
 import logging
 import platform
 import shelve
 import sys
 import traceback
+from urllib import parse
 
 from paste.httpexceptions import HTTPInternalServerError
 from paste.httpexceptions import HTTPNotImplemented
@@ -21,9 +23,6 @@ from repoze.who.interfaces import IAuthenticator
 from repoze.who.interfaces import IChallenger
 from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IMetadataProvider
-import six
-from six import StringIO
-from six.moves.urllib import parse
 from zope.interface import implementer
 
 from saml2 import BINDING_HTTP_POST
@@ -50,7 +49,7 @@ from saml2.samlp import Extensions
 
 logger = logging.getLogger(__name__)
 
-PAOS_HEADER_INFO = 'ver="%s";"%s"' % (paos.NAMESPACE, ECP_SERVICE)
+PAOS_HEADER_INFO = f'ver="{paos.NAMESPACE}";"{ECP_SERVICE}"'
 
 
 def construct_came_from(environ):
@@ -60,17 +59,17 @@ def construct_came_from(environ):
     came_from = environ.get("PATH_INFO")
     qstr = environ.get("QUERY_STRING", "")
     if qstr:
-        came_from += "?" + qstr
+        came_from += f"?{qstr}"
     return came_from
 
 
 def exception_trace(tag, exc, log):
     message = traceback.format_exception(*sys.exc_info())
-    log.error("[%s] ExcList: %s" % (tag, "".join(message)))
-    log.error("[%s] Exception: %s" % (tag, exc))
+    log.error(f"[{tag}] ExcList: {''.join(message)}")
+    log.error(f"[{tag}] Exception: {exc}")
 
 
-class ECP_response(object):
+class ECP_response:
     code = 200
     title = "OK"
 
@@ -79,12 +78,12 @@ class ECP_response(object):
 
     # noinspection PyUnusedLocal
     def __call__(self, environ, start_response):
-        start_response("%s %s" % (self.code, self.title), [("Content-Type", "text/xml")])
+        start_response(f"{self.code} {self.title}", [("Content-Type", "text/xml")])
         return [self.content]
 
 
 @implementer(IChallenger, IIdentifier, IAuthenticator, IMetadataProvider)
-class SAML2Plugin(object):
+class SAML2Plugin:
     def __init__(
         self,
         rememberer_name,
@@ -163,7 +162,7 @@ class SAML2Plugin(object):
         sid_ = sid()
         self.outstanding_queries[sid_] = came_from
         logger.info("Redirect to WAYF function: %s", self.wayf)
-        return -1, HTTPSeeOther(headers=[("Location", "%s?%s" % (self.wayf, sid_))])
+        return -1, HTTPSeeOther(headers=[("Location", f"{self.wayf}?{sid_}")])
 
     # noinspection PyUnusedLocal
     def _pick_idp(self, environ, came_from):
@@ -219,7 +218,6 @@ class SAML2Plugin(object):
                     break
                 except KeyError:
                     logger.debug("No IdP entity ID in query: %s", query)
-                    pass
 
         if idp_entity_id is None:
             if len(idps) == 1:
@@ -249,7 +247,7 @@ class SAML2Plugin(object):
                         logger.debug("Redirect to Discovery Service function")
                         eid = _cli.config.entityid
                         ret = _cli.config.getattr("endpoints", "sp")["discovery_response"][0][0]
-                        ret += "?sid=%s" % sid_
+                        ret += f"?sid={sid_}"
                         loc = _cli.create_discovery_service_request(self.discosrv, eid, **{"return": ret})
                         return -1, SeeOther(loc)
 
@@ -345,7 +343,7 @@ class SAML2Plugin(object):
                         sign=False,
                         extensions=extensions,
                     )
-                    msg_str = "%s" % req
+                    msg_str = f"{req}"
                     _sid = req_id
 
                 if cert is not None:
@@ -361,8 +359,8 @@ class SAML2Plugin(object):
 
                 logger.debug("ht_args: %s", ht_args)
             except Exception as exc:
-                logger.exception("Failed to construct the AuthnRequest: %s" % str(exc))
-                raise Exception("Failed to construct the AuthnRequest: %s" % exc)
+                logger.exception(f"Failed to construct the AuthnRequest: {str(exc)}")
+                raise Exception(f"Failed to construct the AuthnRequest: {exc}")
 
             try:
                 path_info = environ.get("PATH_INFO")
@@ -409,12 +407,12 @@ class SAML2Plugin(object):
                 )
 
             except Exception as excp:
-                logger.exception("Exception: %s" % (excp,))
+                logger.exception(f"Exception: {excp}")
                 raise
 
             session_info = authresp.session_info()
         except TypeError as excp:
-            logger.exception("Exception: %s" % (excp,))
+            logger.exception(f"Exception: {excp}")
             return None
 
         if session_info["came_from"]:
@@ -553,7 +551,7 @@ class SAML2Plugin(object):
     def add_metadata(self, environ, identity):
         """Add information to the knowledge I have about the user"""
         name_id = identity["repoze.who.userid"]
-        if isinstance(name_id, six.string_types):
+        if isinstance(name_id, str):
             try:
                 # Make sure that userids authenticated by another plugin
                 # don't cause problems here.

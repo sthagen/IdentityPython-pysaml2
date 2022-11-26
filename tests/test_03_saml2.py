@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from defusedxml.common import EntitiesForbidden
 from pytest import raises
 import saml2_data
 
@@ -9,23 +10,11 @@ from saml2 import create_class_from_xml_string
 from saml2 import make_vals
 from saml2 import md
 from saml2.saml import Attribute
-from saml2.saml import AuthnContextClassRef
 from saml2.saml import Issuer
 from saml2.saml import NameID
 from saml2.saml import SubjectConfirmation
 from saml2.saml import SubjectConfirmationData
 from saml2.saml import SubjectLocality
-
-
-try:
-    from xml.etree import cElementTree as ElementTree
-except ImportError:
-    try:
-        import cElementTree as ElementTree
-    except ImportError:
-        from elementtree import ElementTree
-
-from defusedxml.common import EntitiesForbidden
 
 
 ITEMS = {

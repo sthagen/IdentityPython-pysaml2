@@ -44,7 +44,7 @@ from saml2.sigver import verify_redirect_signature
 logger = logging.getLogger("saml2.idp")
 
 
-class Cache(object):
+class Cache:
     def __init__(self):
         self.user2uid = {}
         self.uid2user = {}
@@ -80,7 +80,7 @@ def dict2list_of_tuples(d):
 # -----------------------------------------------------------------------------
 
 
-class Service(object):
+class Service:
     def __init__(self, environ, start_response, user=None):
         self.environ = environ
         logger.debug("ENVIRON: %s", environ)
@@ -90,7 +90,7 @@ class Service(object):
     def unpack_redirect(self):
         if "QUERY_STRING" in self.environ:
             _qs = self.environ["QUERY_STRING"]
-            return dict([(k, v[0]) for k, v in parse_qs(_qs).items()])
+            return {k: v[0] for k, v in parse_qs(_qs).items()}
         else:
             return None
 
@@ -98,7 +98,7 @@ class Service(object):
         _dict = parse_qs(get_post(self.environ))
         logger.debug("unpack_post:: %s", _dict)
         try:
-            return dict([(k, v[0]) for k, v in _dict.items()])
+            return {k: v[0] for k, v in _dict.items()}
         except Exception:
             return None
 
@@ -277,11 +277,11 @@ class SSO(Service):
             resp_args, _resp = self.verify_request(query, binding_in)
         except UnknownPrincipal as excp:
             logger.error("UnknownPrincipal: %s", excp)
-            resp = ServiceError("UnknownPrincipal: %s" % (excp,))
+            resp = ServiceError(f"UnknownPrincipal: {excp}")
             return resp(self.environ, self.start_response)
         except UnsupportedBinding as excp:
             logger.error("UnsupportedBinding: %s", excp)
-            resp = ServiceError("UnsupportedBinding: %s" % (excp,))
+            resp = ServiceError(f"UnsupportedBinding: {excp}")
             return resp(self.environ, self.start_response)
 
         if not _resp:
@@ -301,15 +301,15 @@ class SSO(Service):
                     authn=AUTHN_BROKER[self.environ["idp.authn_ref"]],
                     sign_assertion=sign_assertion,
                     sign_response=False,
-                    **resp_args
+                    **resp_args,
                 )
             except Exception as excp:
                 logging.error(exception_trace(excp))
-                resp = ServiceError("Exception: %s" % (excp,))
+                resp = ServiceError(f"Exception: {excp}")
                 return resp(self.environ, self.start_response)
 
         logger.info("AuthNResponse: %s", _resp)
-        http_args = IDP.apply_binding(self.binding_out, "%s" % _resp, self.destination, relay_state, response=True)
+        http_args = IDP.apply_binding(self.binding_out, f"{_resp}", self.destination, relay_state, response=True)
         logger.debug("HTTPargs: %s", http_args)
         return self.response(self.binding_out, http_args)
 
@@ -505,7 +505,7 @@ def do_verify(environ, start_response, _):
 
         kaka = set_cookie("idpauthn", "/", uid, query["authn_reference"][0])
 
-        lox = "%s?id=%s&key=%s" % (query["redirect_uri"][0], uid, query["key"][0])
+        lox = f"{query['redirect_uri'][0]}?id={uid}&key={query['key'][0]}"
         logger.debug("Redirect => %s", lox)
         resp = Redirect(lox, headers=[kaka], content="text/html")
 
@@ -539,7 +539,7 @@ class SLO(Service):
             req_info = IDP.parse_logout_request(body, binding)
         except Exception as exc:
             logger.error("Bad request: %s", exc)
-            resp = BadRequest("%s" % exc)
+            resp = BadRequest(f"{exc}")
             return resp(self.environ, self.start_response)
 
         msg = req_info.message
@@ -556,16 +556,16 @@ class SLO(Service):
                 IDP.session_db.remove_authn_statements(msg.name_id)
             except KeyError as exc:
                 logger.error("ServiceError: %s", exc)
-                resp = ServiceError("%s" % exc)
+                resp = ServiceError(f"{exc}")
                 return resp(self.environ, self.start_response)
 
         resp = IDP.create_logout_response(msg, [binding])
 
         try:
-            hinfo = IDP.apply_binding(binding, "%s" % resp, "", relay_state)
+            hinfo = IDP.apply_binding(binding, f"{resp}", "", relay_state)
         except Exception as exc:
             logger.error("ServiceError: %s", exc)
-            resp = ServiceError("%s" % exc)
+            resp = ServiceError(f"{exc}")
             return resp(self.environ, self.start_response)
 
         # _tlh = dict2list_of_tuples(hinfo["headers"])
@@ -598,7 +598,7 @@ class NMI(Service):
         _resp = IDP.create_manage_name_id_response(request)
 
         # It's using SOAP binding
-        hinfo = IDP.apply_binding(BINDING_SOAP, "%s" % _resp, "", relay_state, response=True)
+        hinfo = IDP.apply_binding(BINDING_SOAP, f"{_resp}", "", relay_state, response=True)
 
         resp = Response(hinfo["data"], headers=hinfo["headers"])
         return resp(self.environ, self.start_response)
@@ -620,7 +620,7 @@ class AIDR(Service):
             resp = NotFound(aid)
             return resp(self.environ, self.start_response)
 
-        hinfo = IDP.apply_binding(BINDING_URI, "%s" % assertion, response=True)
+        hinfo = IDP.apply_binding(BINDING_URI, f"{assertion}", response=True)
 
         logger.debug("HINFO: %s", hinfo)
         resp = Response(hinfo["data"], headers=hinfo["headers"])
@@ -646,7 +646,7 @@ class ARS(Service):
 
         msg = IDP.create_artifact_response(_req, _req.artifact.text)
 
-        hinfo = IDP.apply_binding(BINDING_SOAP, "%s" % msg, "", "", response=True)
+        hinfo = IDP.apply_binding(BINDING_SOAP, f"{msg}", "", "", response=True)
 
         resp = Response(hinfo["data"], headers=hinfo["headers"])
         return resp(self.environ, self.start_response)
@@ -667,7 +667,7 @@ class AQS(Service):
         msg = IDP.create_authn_query_response(_query.subject, _query.requested_authn_context, _query.session_index)
 
         logger.debug("response: %s", msg)
-        hinfo = IDP.apply_binding(BINDING_SOAP, "%s" % msg, "", "", response=True)
+        hinfo = IDP.apply_binding(BINDING_SOAP, f"{msg}", "", "", response=True)
 
         resp = Response(hinfo["data"], headers=hinfo["headers"])
         return resp(self.environ, self.start_response)
@@ -696,7 +696,7 @@ class ATTR(Service):
         msg = IDP.create_attribute_response(identity, name_id=name_id, **args)
 
         logger.debug("response: %s", msg)
-        hinfo = IDP.apply_binding(BINDING_SOAP, "%s" % msg, "", "", response=True)
+        hinfo = IDP.apply_binding(BINDING_SOAP, f"{msg}", "", "", response=True)
 
         resp = Response(hinfo["data"], headers=hinfo["headers"])
         return resp(self.environ, self.start_response)
@@ -729,7 +729,7 @@ class NIM(Service):
         _resp = IDP.create_name_id_mapping_response(name_id, **info)
 
         # Only SOAP
-        hinfo = IDP.apply_binding(BINDING_SOAP, "%s" % _resp, "", "", response=True)
+        hinfo = IDP.apply_binding(BINDING_SOAP, f"{_resp}", "", "", response=True)
 
         resp = Response(hinfo["data"], headers=hinfo["headers"])
         return resp(self.environ, self.start_response)
@@ -851,7 +851,7 @@ def staticfile(environ, start_response):
             path += "/"
         path += environ.get("PATH_INFO", "").lstrip("/")
         start_response("200 OK", [("Content-Type", "text/xml")])
-        return open(path, "r").read()
+        return open(path).read()
     except Exception as ex:
         logger.error("An error occured while creating metadata: %s", ex.message)
         return not_found(environ, start_response)
@@ -937,8 +937,8 @@ from mako.lookup import TemplateLookup
 
 
 AUTHN_BROKER = AuthnBroker()
-AUTHN_BROKER.add(authn_context_class_ref(PASSWORD), username_password_authn, 10, "http://%s" % socket.gethostname())
-AUTHN_BROKER.add(authn_context_class_ref(UNSPECIFIED), "", 0, "http://%s" % socket.gethostname())
+AUTHN_BROKER.add(authn_context_class_ref(PASSWORD), username_password_authn, 10, f"http://{socket.gethostname()}")
+AUTHN_BROKER.add(authn_context_class_ref(UNSPECIFIED), "", 0, f"http://{socket.gethostname()}")
 
 IDP = server.Server(args.config, cache=Cache())
 IDP.ticket = {}
@@ -962,8 +962,8 @@ if __name__ == "__main__":
 
     _rot = args.mako_root
     LOOKUP = TemplateLookup(
-        directories=[_rot + "templates", _rot + "htdocs"],
-        module_directory=_rot + "modules",
+        directories=[f"{_rot}templates", f"{_rot}htdocs"],
+        module_directory=f"{_rot}modules",
         input_encoding="utf-8",
         output_encoding="utf-8",
     )
@@ -972,13 +972,13 @@ if __name__ == "__main__":
     PORT = 8088
 
     SRV = make_server(HOST, PORT, application)
-    print("IdP listening on %s:%s" % (HOST, PORT))
+    print(f"IdP listening on {HOST}:{PORT}")
     SRV.serve_forever()
 else:
     _rot = args.mako_root
     LOOKUP = TemplateLookup(
-        directories=[_rot + "templates", _rot + "htdocs"],
-        module_directory=_rot + "modules",
+        directories=[f"{_rot}templates", f"{_rot}htdocs"],
+        module_directory=f"{_rot}modules",
         input_encoding="utf-8",
         output_encoding="utf-8",
     )

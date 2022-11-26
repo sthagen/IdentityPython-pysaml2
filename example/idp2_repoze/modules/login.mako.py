@@ -1,5 +1,4 @@
-# -*- encoding:utf-8 -*-
-from mako import runtime, filters, cache
+from mako import cache, runtime
 
 UNDEFINED = runtime.UNDEFINED
 __M_dict_builtin = dict

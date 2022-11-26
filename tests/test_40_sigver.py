@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import base64
 
@@ -184,7 +183,7 @@ class TestSecurity:
     def test_sign_assertion(self):
         ass = self._assertion
         print(ass)
-        sign_ass = self.sec.sign_assertion("%s" % ass, node_id=ass.id)
+        sign_ass = self.sec.sign_assertion(f"{ass}", node_id=ass.id)
         # print(sign_ass)
         sass = saml.assertion_from_string(sign_ass)
         # print(sass)
@@ -193,7 +192,7 @@ class TestSecurity:
         assert sass.id == "id-11111"
         assert time_util.str_to_time(sass.issue_instant)
 
-        print("Crypto version : %s" % (self.sec.crypto.version()))
+        print(f"Crypto version : {self.sec.crypto.version()}")
 
         item = self.sec.check_signature(sass, class_name(sass), sign_ass)
 
@@ -210,7 +209,7 @@ class TestSecurity:
         assert sass.id == "id-11111"
         assert time_util.str_to_time(sass.issue_instant)
 
-        print("Crypto version : %s" % (self.sec.crypto.version()))
+        print(f"Crypto version : {self.sec.crypto.version()}")
 
         item = self.sec.check_signature(sass, class_name(sass), sign_ass, must=True)
 
@@ -489,7 +488,7 @@ class TestSecurityNonAsciiAva:
     def test_sign_assertion(self):
         ass = self._assertion
         print(ass)
-        sign_ass = self.sec.sign_assertion("%s" % ass, node_id=ass.id)
+        sign_ass = self.sec.sign_assertion(f"{ass}", node_id=ass.id)
         # print(sign_ass)
         sass = saml.assertion_from_string(sign_ass)
         # print(sass)
@@ -499,7 +498,7 @@ class TestSecurityNonAsciiAva:
         assert sass.id == "id-11111"
         assert time_util.str_to_time(sass.issue_instant)
 
-        print("Crypto version : %s" % (self.sec.crypto.version()))
+        print(f"Crypto version : {self.sec.crypto.version()}")
 
         item = self.sec.check_signature(sass, class_name(sass), sign_ass)
 
@@ -516,7 +515,7 @@ class TestSecurityNonAsciiAva:
         assert sass.id == "id-11111"
         assert time_util.str_to_time(sass.issue_instant)
 
-        print("Crypto version : %s" % (self.sec.crypto.version()))
+        print(f"Crypto version : {self.sec.crypto.version()}")
 
         item = self.sec.check_signature(sass, class_name(sass), sign_ass, must=True)
 

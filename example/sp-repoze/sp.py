@@ -3,16 +3,13 @@ import argparse
 import logging
 import os
 import re
-import subprocess
 
 from Cookie import SimpleCookie
 import sp_conf
-from sp_conf import CONFIG
 from urlparse import parse_qs
 
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import time_util
-from saml2.config import Config
 from saml2.httputil import NotFound
 from saml2.httputil import Redirect
 from saml2.httputil import Response
@@ -20,8 +17,6 @@ from saml2.httputil import Unauthorized
 
 # from saml2.httputil import ServiceError
 from saml2.metadata import create_metadata_string
-from saml2.metadata import entities_descriptor
-from saml2.sigver import security_context
 
 
 logger = logging.getLogger("saml2.SP")
@@ -31,21 +26,21 @@ args = None
 
 
 def dict_to_table(ava, lev=0, width=1):
-    txt = ['<table border=%s bordercolor="black">\n' % width]
+    txt = [f'<table border={width} bordercolor="black">\n']
     for prop, valarr in ava.items():
         txt.append("<tr>\n")
         if isinstance(valarr, basestring):
-            txt.append("<th>%s</th>\n" % str(prop))
+            txt.append(f"<th>{str(prop)}</th>\n")
             try:
-                txt.append("<td>%s</td>\n" % valarr.encode("utf8"))
+                txt.append(f"<td>{valarr.encode('utf8')}</td>\n")
             except AttributeError:
-                txt.append("<td>%s</td>\n" % valarr)
+                txt.append(f"<td>{valarr}</td>\n")
         elif isinstance(valarr, list):
             i = 0
             n = len(valarr)
             for val in valarr:
                 if not i:
-                    txt.append("<th rowspan=%d>%s</td>\n" % (len(valarr), prop))
+                    txt.append(f"<th rowspan={len(valarr)}>{prop}</td>\n")
                 else:
                     txt.append("<tr>\n")
                 if isinstance(val, dict):
@@ -54,15 +49,15 @@ def dict_to_table(ava, lev=0, width=1):
                     txt.append("</td>\n")
                 else:
                     try:
-                        txt.append("<td>%s</td>\n" % val.encode("utf8"))
+                        txt.append(f"<td>{val.encode('utf8')}</td>\n")
                     except AttributeError:
-                        txt.append("<td>%s</td>\n" % val)
+                        txt.append(f"<td>{val}</td>\n")
                 if n > 1:
                     txt.append("</tr>\n")
                 n -= 1
                 i += 1
         elif isinstance(valarr, dict):
-            txt.append("<th>%s</th>\n" % prop)
+            txt.append(f"<th>{prop}</th>\n")
             txt.append("<td>\n")
             txt.extend(dict_to_table(valarr, lev + 1, width - 1))
             txt.append("</td>\n")
@@ -214,7 +209,7 @@ def metadata(environ, start_response):
         if path[-1] != "/":
             path += "/"
         metadata = create_metadata_string(
-            path + "sp_conf.py", None, args.valid, args.cert, args.keyfile, args.id, args.name, args.sign
+            f"{path}sp_conf.py", None, args.valid, args.cert, args.keyfile, args.id, args.name, args.sign
         )
         start_response("200 OK", [("Content-Type", "text/xml")])
         return metadata
@@ -297,5 +292,5 @@ if __name__ == "__main__":
     from wsgiref.simple_server import make_server
 
     srv = make_server(HOST, PORT, app_with_auth)
-    print("SP listening on %s:%s" % (HOST, PORT))
+    print(f"SP listening on {HOST}:{PORT}")
     srv.serve_forever()

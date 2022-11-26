@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 
 """Contains classes and functions that a SAML2.0 Service Provider (SP) may use
@@ -9,12 +8,10 @@ import logging
 import threading
 import time
 from typing import Mapping
+from urllib.parse import parse_qs
+from urllib.parse import urlencode
+from urllib.parse import urlparse
 from warnings import warn as _warn
-
-import six
-from six.moves.urllib.parse import parse_qs
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.parse import urlparse
 
 import saml2
 from saml2 import BINDING_HTTP_POST
@@ -223,7 +220,7 @@ class Base(Entity):
         # IdP in the configuration raise exception
         eids = self.metadata.with_descriptor("idpsso")
         if len(eids) > 1:
-            raise IdpUnspecified("Too many IdPs to choose from: %s" % eids)
+            raise IdpUnspecified(f"Too many IdPs to choose from: {eids}")
 
         try:
             srvs = self.metadata.single_sign_on_service(list(eids.keys())[0], binding)
@@ -383,7 +380,7 @@ class Base(Entity):
             if isinstance(_item, _msg.child_class(param)):
                 args[param] = _item
             else:
-                raise ValueError("Wrong type for param {name}".format(name=param))
+                raise ValueError(f"Wrong type for param {param}")
 
         # NameIDPolicy
         nameid_policy_format_config = self.config.getattr("name_id_policy_format", "sp")
@@ -513,7 +510,7 @@ class Base(Entity):
                         pass
             else:
                 raise AttributeError("Missing required parameter")
-        elif isinstance(name_id, six.string_types):
+        elif isinstance(name_id, str):
             name_id = saml.NameID(text=name_id)
             for key in ["sp_name_qualifier", "name_qualifier", "format"]:
                 try:
@@ -627,7 +624,7 @@ class Base(Entity):
         """
 
         if action:
-            if isinstance(action, six.string_types):
+            if isinstance(action, str):
                 _action = [saml.Action(text=action)]
             else:
                 _action = [saml.Action(text=a) for a in action]
@@ -657,7 +654,7 @@ class Base(Entity):
         :return: One ID ref
         """
 
-        if isinstance(assertion_id_refs, six.string_types):
+        if isinstance(assertion_id_refs, str):
             return 0, assertion_id_refs
         else:
             return 0, assertion_id_refs[0]
@@ -1003,9 +1000,9 @@ class Base(Entity):
         params = urlencode({k: v for k, v in args.items() if v})
         # url can already contain some parameters
         if "?" in url:
-            return "%s&%s" % (url, params)
+            return f"{url}&{params}"
         else:
-            return "%s?%s" % (url, params)
+            return f"{url}?{params}"
 
     @staticmethod
     def parse_discovery_service_response(url="", query="", returnIDParam="entityID"):

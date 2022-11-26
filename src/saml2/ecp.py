@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 
 """
@@ -31,7 +30,7 @@ logger = logging.getLogger(__name__)
 def ecp_capable(headers):
     if MIME_PAOS in headers["Accept"]:
         if "PAOS" in headers:
-            if 'ver="%s";"%s"' % (paos.NAMESPACE, SERVICE) in headers["PAOS"]:
+            if f'ver="{paos.NAMESPACE}";"{SERVICE}"' in headers["PAOS"]:
                 return True
 
     return False
@@ -70,7 +69,7 @@ def ecp_auth_request(cls, entityid=None, relay_state="", sign=None, sign_alg=Non
     # <samlp:AuthnRequest>
     # ----------------------------------------
 
-    logger.info("entityid: %s, binding: %s" % (entityid, BINDING_SOAP))
+    logger.info(f"entityid: {entityid}, binding: {BINDING_SOAP}")
 
     location = cls._sso_location(entityid, binding=BINDING_SOAP)
     req_id, authn_req = cls.create_authn_request(
@@ -138,7 +137,7 @@ def handle_ecp_authn_response(cls, soap_message, outstanding=None):
 
     response = authn_response(cls.config, cls.service_urls(), outstanding, allow_unsolicited=True)
 
-    response.loads("%s" % rdict["body"], False, soap_message)
+    response.loads(f"{rdict['body']}", False, soap_message)
     response.verify()
     cls.users.add_information_about_person(response.session_info())
 
@@ -164,7 +163,7 @@ def ecp_response(target_url, response):
 
     soap_envelope = soapenv.Envelope(header=header, body=body)
 
-    return "%s" % soap_envelope
+    return f"{soap_envelope}"
 
 
 class ECPServer(Server):

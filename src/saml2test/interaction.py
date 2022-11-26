@@ -8,7 +8,6 @@ from mechanize import ParseResponseEx
 from mechanize._form import AmbiguityError
 from mechanize._form import ControlNotFoundError
 from mechanize._form import ListControl
-import six
 from urlparse import urlparse
 
 
@@ -92,7 +91,7 @@ class RResponse:
             return self.text
 
 
-class Interaction(object):
+class Interaction:
     def __init__(self, httpc, interactions=None):
         self.httpc = httpc
         self.interactions = interactions
@@ -123,7 +122,7 @@ class Interaction(object):
                         _match += 1
                     else:
                         _c = _bs.title.contents
-                        if isinstance(_c, list) and not isinstance(_c, six.string_types):
+                        if isinstance(_c, list) and not isinstance(_c, str):
                             for _line in _c:
                                 if val in _line:
                                     _match += 1
@@ -183,7 +182,7 @@ class Interaction(object):
                             _default = _ava["value"]
                             try:
                                 orig_val = form[prop]
-                                if isinstance(orig_val, six.string_types):
+                                if isinstance(orig_val, str):
                                     if orig_val == _default:
                                         _form = form
                                 elif _default in orig_val:
@@ -309,7 +308,7 @@ class Interaction(object):
                 _url = kwargs["location"]
 
             part = urlparse(_url)
-            url = "%s://%s%s" % (part[0], part[1], path)
+            url = f"{part[0]}://{part[1]}{path}"
         else:
             url = path
 
@@ -361,7 +360,7 @@ class Interaction(object):
 # ========================================================================
 
 
-class Action(object):
+class Action:
     def __init__(self, args):
         self.args = args or {}
         self.request = None

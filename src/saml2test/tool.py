@@ -3,7 +3,6 @@ import sys
 import traceback
 
 import cookielib
-import six
 from urlparse import parse_qs
 
 from saml2test import CheckError
@@ -24,7 +23,7 @@ __author__ = "rolandh"
 logger = logging.getLogger(__name__)
 
 
-class Conversation(object):
+class Conversation:
     """
     :ivar response: The received HTTP messages
     :ivar protocol_response: List of the received protocol messages
@@ -75,7 +74,7 @@ class Conversation(object):
             raise CheckError
 
     def do_check(self, test, **kwargs):
-        if isinstance(test, six.string_types):
+        if isinstance(test, str):
             chk = self.check_factory(test)(**kwargs)
         else:
             chk = test(**kwargs)
@@ -88,7 +87,7 @@ class Conversation(object):
         chk = self.check_factory(test)()
         chk(self, self.test_output)
         if bryt:
-            e = FatalError("%s" % err)
+            e = FatalError(f"{err}")
             e.trace = "".join(traceback.format_exception(*sys.exc_info()))
             raise e
 
@@ -126,7 +125,7 @@ class Conversation(object):
                 else:
                     rdseq.append(url)
                     if len(rdseq) > 8:
-                        raise FatalError("Too long sequence of redirects: %s" % rdseq)
+                        raise FatalError(f"Too long sequence of redirects: {rdseq}")
 
                 logger.info("HTTP %d Location: %s", _response.status_code, url)
                 # If back to me
@@ -154,7 +153,7 @@ class Conversation(object):
                         logger.info("GET %s", url)
                         _response = self.client.send(url, "GET")
                     except Exception as err:
-                        raise FatalError("%s" % err)
+                        raise FatalError(f"{err}")
 
                     content = _response.text
                     logger.info("<-- CONTENT: %s", content)

@@ -10,8 +10,6 @@ import sys
 import traceback
 import zlib
 
-import six
-
 from saml2 import VERSION
 from saml2 import saml
 from saml2 import samlp
@@ -160,7 +158,7 @@ def deflate_and_base64_encode(string_val):
     :param string_val: The string to deflate and encode
     :return: The deflated and encoded string
     """
-    if not isinstance(string_val, six.binary_type):
+    if not isinstance(string_val, bytes):
         string_val = string_val.encode("utf-8")
     return base64.b64encode(zlib.compress(string_val)[2:-4])
 
@@ -183,7 +181,7 @@ def rndbytes(size=16, alphabet=""):
     Returns rndstr always as a binary type
     """
     x = rndstr(size, alphabet)
-    if isinstance(x, six.string_types):
+    if isinstance(x, str):
         return x.encode("utf-8")
     return x
 
@@ -196,7 +194,7 @@ def sid():
     :return: A random string prefix with 'id-' to make it
         compliant with the NCName specification
     """
-    return "id-" + rndstr(17)
+    return f"id-{rndstr(17)}"
 
 
 def parse_attribute_map(filenames):
@@ -307,7 +305,7 @@ def _attrval(val, typ=""):
 
 
 def do_ava(val, typ=""):
-    if isinstance(val, six.string_types):
+    if isinstance(val, str):
         ava = saml.AttributeValue()
         ava.set_text(val)
         attrval = [ava]
@@ -320,7 +318,7 @@ def do_ava(val, typ=""):
     elif val is None:
         attrval = None
     else:
-        raise OtherError("strange value type on: %s" % val)
+        raise OtherError(f"strange value type on: {val}")
 
     if typ:
         for ava in attrval:
@@ -335,7 +333,7 @@ def do_attribute(val, typ, key):
     if attrval:
         attr.attribute_value = attrval
 
-    if isinstance(key, six.string_types):
+    if isinstance(key, str):
         attr.name = key
     elif isinstance(key, tuple):  # 3-tuple or 2-tuple
         try:
@@ -391,11 +389,11 @@ def factory(klass, **kwargs):
 
 def signature(secret, parts):
     """Generates a signature. All strings are assumed to be utf-8"""
-    if not isinstance(secret, six.binary_type):
+    if not isinstance(secret, bytes):
         secret = secret.encode("utf-8")
     newparts = []
     for part in parts:
-        if not isinstance(part, six.binary_type):
+        if not isinstance(part, bytes):
             part = part.encode("utf-8")
         newparts.append(part)
     parts = newparts
@@ -419,9 +417,9 @@ def exception_trace(exc):
     message = traceback.format_exception(*sys.exc_info())
 
     try:
-        _exc = "Exception: %s" % exc
+        _exc = f"Exception: {exc}"
     except UnicodeEncodeError:
-        _exc = "Exception: %s" % exc.message.encode("utf-8", "replace")
+        _exc = f"Exception: {exc.message.encode('utf-8', 'replace')}"
 
     return {"message": _exc, "content": "".join(message)}
 

@@ -3,8 +3,6 @@
 import logging
 import shelve
 
-import six
-
 from saml2 import SAMLError
 from saml2 import time_util
 from saml2.ident import code
@@ -30,7 +28,7 @@ class CacheError(SAMLError):
     pass
 
 
-class Cache(object):
+class Cache:
     def __init__(self, filename=None):
         if filename:
             self._db = shelve.open(filename, writeback=True, protocol=2)
@@ -106,9 +104,9 @@ class Cache(object):
         (timestamp, info) = self._db[cni][entity_id]
         info = info.copy()
         if check_not_on_or_after and time_util.after(timestamp):
-            raise TooOld("past %s" % str(timestamp))
+            raise TooOld(f"past {str(timestamp)}")
 
-        if "name_id" in info and isinstance(info["name_id"], six.string_types):
+        if "name_id" in info and isinstance(info["name_id"], str):
             info["name_id"] = decode(info["name_id"])
         return info or None
 
@@ -123,7 +121,7 @@ class Cache(object):
         :param not_on_or_after: A time after which the assertion is not valid.
         """
         info = dict(info)
-        if "name_id" in info and not isinstance(info["name_id"], six.string_types):
+        if "name_id" in info and not isinstance(info["name_id"], str):
             # make friendly to (JSON) serialization
             info["name_id"] = code(name_id)
 

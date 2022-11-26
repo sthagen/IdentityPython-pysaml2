@@ -1,13 +1,11 @@
 import cgi
 import hashlib
 import hmac
+from http.cookies import SimpleCookie
 import logging
 import time
-
-import six
-from six.moves.http_cookies import SimpleCookie
-from six.moves.urllib.parse import parse_qs
-from six.moves.urllib.parse import quote
+from urllib.parse import parse_qs
+from urllib.parse import quote
 
 from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_POST
@@ -23,7 +21,7 @@ __author__ = "rohe0002"
 logger = logging.getLogger(__name__)
 
 
-class Response(object):
+class Response:
     _template = None
     _status = "200 OK"
     _content_type = "text/html"
@@ -63,9 +61,9 @@ class Response(object):
             mte = self.mako_lookup.get_template(self.mako_template)
             message = mte.render(**argv)
 
-        if isinstance(message, six.string_types):
+        if isinstance(message, str):
             return [message.encode("utf-8")]
-        elif isinstance(message, six.binary_type):
+        elif isinstance(message, bytes):
             return [message]
         else:
             return message
@@ -159,7 +157,7 @@ class BadGateway(Response):
     _status = "502 Bad Gateway"
 
 
-class HttpParameters(object):
+class HttpParameters:
     """GET or POST signature parameters for Redirect or POST-SimpleSign bindings
     because they are not contained in XML unlike the POST binding
     """
@@ -202,21 +200,21 @@ def geturl(environ, query=True, path=True, use_server_name=False):
     :param use_server_name: If SERVER_NAME/_HOST should be used instead of
         HTTP_HOST
     """
-    url = [environ["wsgi.url_scheme"] + "://"]
+    url = [f"{environ['wsgi.url_scheme']}://"]
     if use_server_name:
         url.append(environ["SERVER_NAME"])
         if environ["wsgi.url_scheme"] == "https":
             if environ["SERVER_PORT"] != "443":
-                url.append(":" + environ["SERVER_PORT"])
+                url.append(f":{environ['SERVER_PORT']}")
         else:
             if environ["SERVER_PORT"] != "80":
-                url.append(":" + environ["SERVER_PORT"])
+                url.append(f":{environ['SERVER_PORT']}")
     else:
         url.append(environ["HTTP_HOST"])
     if path:
         url.append(getpath(environ))
     if query and environ.get("QUERY_STRING"):
-        url.append("?" + environ["QUERY_STRING"])
+        url.append(f"?{environ['QUERY_STRING']}")
     return "".join(url)
 
 
@@ -253,13 +251,13 @@ def get_response(environ, start_response):
 def unpack_redirect(environ):
     if "QUERY_STRING" in environ:
         _qs = environ["QUERY_STRING"]
-        return dict([(k, v[0]) for k, v in parse_qs(_qs).items()])
+        return {k: v[0] for k, v in parse_qs(_qs).items()}
     else:
         return None
 
 
 def unpack_post(environ):
-    return dict([(k, v[0]) for k, v in parse_qs(get_post(environ))])
+    return {k: v[0] for k, v in parse_qs(get_post(environ))}
 
 
 def unpack_soap(environ):

@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from paste.httpexceptions import HTTPFound
 from paste.httpheaders import CONTENT_LENGTH
 from paste.httpheaders import CONTENT_TYPE
@@ -8,7 +10,6 @@ from paste.request import parse_formvars
 from repoze.who.interfaces import IChallenger
 from repoze.who.interfaces import IIdentifier
 from repoze.who.plugins.form import FormPlugin
-from six.moves.urllib.parse import urlencode
 from zope.interface import implements
 
 
@@ -91,7 +92,7 @@ class FormHiddenPlugin(FormPlugin):
         query = parse_dict_querystring(environ)
         hidden = []
         for key, val in query.items():
-            hidden.append(HIDDEN_PRE_LINE % ("_%s_" % key, val))
+            hidden.append(HIDDEN_PRE_LINE % (f"_{key}_", val))
 
         logger.info("hidden: %s", hidden)
         form = self.formbody or _DEFAULT_FORM
@@ -114,7 +115,7 @@ def make_plugin(login_form_qs="__do_login", rememberer_name=None, form=None):
     if rememberer_name is None:
         raise ValueError("must include rememberer key (name of another IIdentifier plugin)")
     if form is not None:
-        with open(form, "r") as f:
+        with open(form) as f:
             form = f.read()
     plugin = FormHiddenPlugin(login_form_qs, rememberer_name, form)
     return plugin

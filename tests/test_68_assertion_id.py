@@ -1,7 +1,6 @@
 from contextlib import closing
-
-from six.moves.urllib.parse import parse_qs
-from six.moves.urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_SOAP
@@ -76,7 +75,7 @@ def test_basic_flow():
             authn=AUTHN,
         )
 
-        hinfo = idp.apply_binding(binding, "%s" % resp, destination, relay_state)
+        hinfo = idp.apply_binding(binding, f"{resp}", destination, relay_state)
 
         # --------- @SP -------------
 
@@ -101,7 +100,7 @@ def test_basic_flow():
 
         resp = idp.create_assertion_id_request_response(aid)
 
-        hinfo = idp.apply_binding(binding, "%s" % resp, None, "", response=True)
+        hinfo = idp.apply_binding(binding, f"{resp}", None, "", response=True)
 
         # ----------- @SP -------------
 

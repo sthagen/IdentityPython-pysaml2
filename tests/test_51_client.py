@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from base64 import decodebytes as b64decode
 from base64 import encodebytes as b64encode
+from urllib import parse
 import uuid
 
 from defusedxml.common import EntitiesForbidden
@@ -10,8 +10,6 @@ from fakeIDP import FakeIDP
 from fakeIDP import unpack_form
 from pathutils import full_path
 from pytest import raises
-import six
-from six.moves.urllib import parse
 
 from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_HTTP_REDIRECT
@@ -90,10 +88,7 @@ def generate_cert():
 
 
 def add_subelement(xmldoc, node_name, subelem):
-    if six.PY2:
-        _str = unicode
-    else:
-        _str = str
+    _str = str
 
     s = xmldoc.find(node_name)
     if s > 0:
@@ -109,8 +104,8 @@ def add_subelement(xmldoc, node_name, subelem):
         if subelem_str[0:5].lower() == "<?xml":
             subelem_str = subelem_str.split("\n", 1)[1]
         xmldoc = xmldoc.replace(
-            "<%s:%s%s/>" % (tag, node_name, spaces),
-            "<%s:%s%s>%s</%s:%s>" % (tag, node_name, spaces, subelem_str, tag, node_name),
+            f"<{tag}:{node_name}{spaces}/>",
+            f"<{tag}:{node_name}{spaces}>{subelem_str}</{tag}:{node_name}>",
         )
 
     return xmldoc
@@ -164,7 +159,7 @@ nid = NameID(name_qualifier="foo", format=NAMEID_FORMAT_TRANSIENT, text="123456"
 
 
 def list_values2simpletons(_dict):
-    return dict([(k, v[0]) for k, v in _dict.items()])
+    return {k: v[0] for k, v in _dict.items()}
 
 
 class TestClient:
@@ -188,7 +183,7 @@ class TestClient:
             format=saml.NAMEID_FORMAT_PERSISTENT,
             message_id="id1",
         )
-        reqstr = "%s" % req.to_string().decode()
+        reqstr = f"{req.to_string().decode()}"
 
         assert req.destination == "https://idp.example.com/idp/"
         assert req.id == "id1"
@@ -358,7 +353,7 @@ class TestClient:
         conf = config.SPConfig()
         conf.load_file("sp_conf_nameidpolicy")
         client = Saml2Client(conf)
-        ar_str = "%s" % client.create_authn_request("http://www.example.com/sso", message_id="id1")[1]
+        ar_str = f"{client.create_authn_request('http://www.example.com/sso', message_id='id1')[1]}"
 
         ar = samlp.authn_request_from_string(ar_str)
         assert ar.assertion_consumer_service_url == ("http://lingon.catalogix" ".se:8087/")
@@ -400,7 +395,7 @@ class TestClient:
     def test_sign_auth_request_0(self):
         req_id, areq = self.client.create_authn_request("http://www.example.com/sso", sign=True, message_id="id1")
 
-        ar_str = "%s" % areq
+        ar_str = f"{areq}"
         ar = samlp.authn_request_from_string(ar_str)
 
         assert ar
@@ -482,7 +477,7 @@ class TestClient:
             authn=AUTHN,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -567,7 +562,7 @@ class TestClient:
             encrypt_cert_advice=cert_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -601,7 +596,7 @@ class TestClient:
             pefim=True,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -635,7 +630,7 @@ class TestClient:
             pefim=True,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -674,7 +669,7 @@ class TestClient:
             encrypt_cert_assertion=cert_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -718,7 +713,7 @@ class TestClient:
             encrypt_cert_advice=cert_advice_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -755,7 +750,7 @@ class TestClient:
             encrypted_advice_attributes=True,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -793,7 +788,7 @@ class TestClient:
             encrypt_cert_assertion=cert_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -942,7 +937,7 @@ class TestClient:
                 assers = extension_elements_to_elements(enc_ass.extension_elements, [saml, samlp])
                 for ass in assers:
                     if ass.signature:
-                        if not _csec.verify_signature("%s" % ass, sign_cert_file, node_name=class_name(ass)):
+                        if not _csec.verify_signature(f"{ass}", sign_cert_file, node_name=class_name(ass)):
                             continue
                     resp_ass.append(ass)
 
@@ -994,7 +989,7 @@ class TestClient:
             encrypted_assertion=EncryptedAssertion(),
         )
 
-        xmldoc = "%s" % response
+        xmldoc = f"{response}"
         # strangely enough I get different tags if I run this test separately
         # or as part of a bunch of tests.
         xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
@@ -1084,7 +1079,7 @@ class TestClient:
         response.assertion.append(assertion)
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion), key_file=self.client.sec.key_file, node_id=a_assertion.id
+            f"{response}", class_name(a_assertion), key_file=self.client.sec.key_file, node_id=a_assertion.id
         )
 
         # xmldoc = "%s" % response
@@ -1093,10 +1088,7 @@ class TestClient:
         # xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -1248,14 +1240,11 @@ class TestClient:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_1), key_file=self.server.sec.key_file, node_id=a_assertion_1.id
+            f"{response}", class_name(a_assertion_1), key_file=self.server.sec.key_file, node_id=a_assertion_1.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -1276,14 +1265,11 @@ class TestClient:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_2), key_file=self.server.sec.key_file, node_id=a_assertion_2.id
+            f"{response}", class_name(a_assertion_2), key_file=self.server.sec.key_file, node_id=a_assertion_2.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -1299,7 +1285,7 @@ class TestClient:
         response = response.get_xml_string_with_self_contained_assertion_within_encrypted_assertion(assertion_tag)
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(assertion_1), key_file=self.server.sec.key_file, node_id=assertion_1.id
+            f"{response}", class_name(assertion_1), key_file=self.server.sec.key_file, node_id=assertion_1.id
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -1324,14 +1310,11 @@ class TestClient:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_3), key_file=self.server.sec.key_file, node_id=a_assertion_3.id
+            f"{response}", class_name(a_assertion_3), key_file=self.server.sec.key_file, node_id=a_assertion_3.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -1353,14 +1336,11 @@ class TestClient:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_4), key_file=self.server.sec.key_file, node_id=a_assertion_4.id
+            f"{response}", class_name(a_assertion_4), key_file=self.server.sec.key_file, node_id=a_assertion_4.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -1370,7 +1350,7 @@ class TestClient:
         response = samlp.response_from_string(enctext)
 
         response = _sec.sign_statement(
-            "%s" % response,
+            f"{response}",
             class_name(response.assertion[0]),
             key_file=self.server.sec.key_file,
             node_id=response.assertion[0].id,
@@ -1870,7 +1850,7 @@ class TestClientNonAsciiAva:
             format=saml.NAMEID_FORMAT_PERSISTENT,
             message_id="id1",
         )
-        reqstr = "%s" % req.to_string().decode()
+        reqstr = f"{req.to_string().decode()}"
 
         assert req.destination == "https://idp.example.com/idp/"
         assert req.id == "id1"
@@ -2000,7 +1980,7 @@ class TestClientNonAsciiAva:
         conf = config.SPConfig()
         conf.load_file("sp_conf_nameidpolicy")
         client = Saml2Client(conf)
-        ar_str = "%s" % client.create_authn_request("http://www.example.com/sso", message_id="id1")[1]
+        ar_str = f"{client.create_authn_request('http://www.example.com/sso', message_id='id1')[1]}"
 
         ar = samlp.authn_request_from_string(ar_str)
         assert ar.assertion_consumer_service_url == ("http://lingon.catalogix" ".se:8087/")
@@ -2042,7 +2022,7 @@ class TestClientNonAsciiAva:
     def test_sign_auth_request_0(self):
         req_id, areq = self.client.create_authn_request("http://www.example.com/sso", sign=True, message_id="id1")
 
-        ar_str = "%s" % areq
+        ar_str = f"{areq}"
         ar = samlp.authn_request_from_string(ar_str)
 
         assert ar
@@ -2094,7 +2074,7 @@ class TestClientNonAsciiAva:
             authn=AUTHN,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode("utf-8"))
 
@@ -2179,7 +2159,7 @@ class TestClientNonAsciiAva:
             encrypt_cert_advice=cert_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2213,7 +2193,7 @@ class TestClientNonAsciiAva:
             pefim=True,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2247,7 +2227,7 @@ class TestClientNonAsciiAva:
             pefim=True,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2286,7 +2266,7 @@ class TestClientNonAsciiAva:
             encrypt_cert_assertion=cert_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2330,7 +2310,7 @@ class TestClientNonAsciiAva:
             encrypt_cert_advice=cert_advice_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2367,7 +2347,7 @@ class TestClientNonAsciiAva:
             encrypted_advice_attributes=True,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2405,7 +2385,7 @@ class TestClientNonAsciiAva:
             encrypt_cert_assertion=cert_str,
         )
 
-        resp_str = "%s" % resp
+        resp_str = f"{resp}"
 
         resp_str = b64encode(resp_str.encode())
 
@@ -2419,10 +2399,7 @@ class TestClientNonAsciiAva:
         """Test that the SP client can parse an authentication response
         from an IdP that does not contain a <NameID> element."""
 
-        if six.PY2:
-            _bytes = str
-        else:
-            _bytes = bytes
+        _bytes = bytes
 
         conf = config.SPConfig()
         conf.load_file("server_conf")
@@ -2461,10 +2438,7 @@ class TestClientNonAsciiAva:
 
         # Cast the response to a string and encode it to mock up the payload
         # the SP client is expected to receive via HTTP POST binding.
-        if six.PY2:
-            resp_str = b64encode(str(resp))
-        else:
-            resp_str = b64encode(bytes(str(resp), "utf-8"))
+        resp_str = b64encode(bytes(str(resp), "utf-8"))
 
         # We do not need the client to verify a signature for this test.
         client.want_assertions_signed = False
@@ -2494,10 +2468,7 @@ class TestClientNonAsciiAva:
 
         # Cast the response to a string and encode it to mock up the payload
         # the SP client is expected to receive via HTTP POST binding.
-        if six.PY2:
-            resp_str = b64encode(str(resp))
-        else:
-            resp_str = b64encode(bytes(str(resp), "utf-8"))
+        resp_str = b64encode(bytes(str(resp), "utf-8"))
 
         # We do not need the client to verify a signature for this test.
         client.want_assertions_signed = False
@@ -2523,10 +2494,7 @@ class TestClientNonAsciiAva:
 
         # Cast the response to a string and encode it to mock up the payload
         # the SP client is expected to receive via HTTP POST binding.
-        if six.PY2:
-            resp_str = b64encode(str(resp))
-        else:
-            resp_str = b64encode(bytes(str(resp), "utf-8"))
+        resp_str = b64encode(bytes(str(resp), "utf-8"))
 
         # We do not need the client to verify a signature for this test.
         client.want_assertions_signed = False
@@ -2618,7 +2586,7 @@ class TestClientNonAsciiAva:
                 assers = extension_elements_to_elements(enc_ass.extension_elements, [saml, samlp])
                 for ass in assers:
                     if ass.signature:
-                        if not _csec.verify_signature("%s" % ass, sign_cert_file, node_name=class_name(ass)):
+                        if not _csec.verify_signature(f"{ass}", sign_cert_file, node_name=class_name(ass)):
                             continue
                     resp_ass.append(ass)
 
@@ -2670,7 +2638,7 @@ class TestClientNonAsciiAva:
             encrypted_assertion=EncryptedAssertion(),
         )
 
-        xmldoc = "%s" % response
+        xmldoc = f"{response}"
         # strangely enough I get different tags if I run this test separately
         # or as part of a bunch of tests.
         xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
@@ -2760,7 +2728,7 @@ class TestClientNonAsciiAva:
         response.assertion.append(assertion)
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion), key_file=self.client.sec.key_file, node_id=a_assertion.id
+            f"{response}", class_name(a_assertion), key_file=self.client.sec.key_file, node_id=a_assertion.id
         )
 
         # xmldoc = "%s" % response
@@ -2769,10 +2737,7 @@ class TestClientNonAsciiAva:
         # xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -2781,10 +2746,7 @@ class TestClientNonAsciiAva:
 
         # seresp = samlp.response_from_string(enctext)
 
-        if six.PY2:
-            resp_str = b64encode(enctext.encode("utf-8"))
-        else:
-            resp_str = b64encode(bytes(enctext, "utf-8"))
+        resp_str = b64encode(bytes(enctext, "utf-8"))
 
         # Now over to the client side
         resp = self.client.parse_authn_request_response(
@@ -2926,14 +2888,11 @@ class TestClientNonAsciiAva:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_1), key_file=self.server.sec.key_file, node_id=a_assertion_1.id
+            f"{response}", class_name(a_assertion_1), key_file=self.server.sec.key_file, node_id=a_assertion_1.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -2954,14 +2913,11 @@ class TestClientNonAsciiAva:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_2), key_file=self.server.sec.key_file, node_id=a_assertion_2.id
+            f"{response}", class_name(a_assertion_2), key_file=self.server.sec.key_file, node_id=a_assertion_2.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -2977,7 +2933,7 @@ class TestClientNonAsciiAva:
         response = response.get_xml_string_with_self_contained_assertion_within_encrypted_assertion(assertion_tag)
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(assertion_1), key_file=self.server.sec.key_file, node_id=assertion_1.id
+            f"{response}", class_name(assertion_1), key_file=self.server.sec.key_file, node_id=assertion_1.id
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -3002,14 +2958,11 @@ class TestClientNonAsciiAva:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_3), key_file=self.server.sec.key_file, node_id=a_assertion_3.id
+            f"{response}", class_name(a_assertion_3), key_file=self.server.sec.key_file, node_id=a_assertion_3.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -3031,14 +2984,11 @@ class TestClientNonAsciiAva:
         )
 
         response = _sec.sign_statement(
-            "%s" % response, class_name(a_assertion_4), key_file=self.server.sec.key_file, node_id=a_assertion_4.id
+            f"{response}", class_name(a_assertion_4), key_file=self.server.sec.key_file, node_id=a_assertion_4.id
         )
 
         node_xpath = "".join(
-            [
-                '/*[local-name()="%s"]' % v
-                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
-            ]
+            [f'/*[local-name()="{v}"]' for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]]
         )
 
         enctext = _sec.crypto.encrypt_assertion(
@@ -3048,7 +2998,7 @@ class TestClientNonAsciiAva:
         response = samlp.response_from_string(enctext)
 
         response = _sec.sign_statement(
-            "%s" % response,
+            f"{response}",
             class_name(response.assertion[0]),
             key_file=self.server.sec.key_file,
             node_id=response.assertion[0].id,
@@ -3083,7 +3033,7 @@ class TestClientNonAsciiAva:
         # Revert configuration change to disallow unsinged responses
         self.client.want_response_signed = True
 
-        msg_str = "%s" % self.client.create_authn_request("http://localhost:8088/sso", message_id="id1")[1]
+        msg_str = f"{self.client.create_authn_request('http://localhost:8088/sso', message_id='id1')[1]}"
 
         info = self.client.apply_binding(
             BINDING_HTTP_REDIRECT, msg_str, destination="", relay_state="relay2", sign=True, sigalg=SIG_RSA_SHA256
@@ -3209,7 +3159,7 @@ class TestClientWithDummy:
             IDP, "http://www.example.com/relay_state", binding=binding, response_binding=response_binding
         )
 
-        assert isinstance(sid, six.string_types)
+        assert isinstance(sid, str)
         assert len(http_args) == 5
         assert http_args["headers"][0][0] == "Location"
         assert http_args["data"] == []
@@ -3229,7 +3179,7 @@ class TestClientWithDummy:
         )
 
         assert binding == auth_binding
-        assert isinstance(sid, six.string_types)
+        assert isinstance(sid, str)
         assert len(http_args) == 5
         assert http_args["headers"][0][0] == "Location"
         assert http_args["data"] == []

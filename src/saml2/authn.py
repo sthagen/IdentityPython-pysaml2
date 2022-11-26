@@ -1,10 +1,8 @@
 import logging
 import time
-
-import six
-from six.moves.urllib.parse import parse_qs
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.parse import urlsplit
+from urllib.parse import parse_qs
+from urllib.parse import urlencode
+from urllib.parse import urlsplit
 
 from saml2 import SAMLError
 import saml2.cryptography.symmetric
@@ -28,7 +26,7 @@ class EncodeError(SAMLError):
     pass
 
 
-class UserAuthnMethod(object):
+class UserAuthnMethod:
     def __init__(self, srv):
         self.srv = srv
 
@@ -80,7 +78,7 @@ def create_return_url(base, query, **kwargs):
 
     for key, values in parse_qs(query).items():
         if key in kwargs:
-            if isinstance(kwargs[key], six.string_types):
+            if isinstance(kwargs[key], str):
                 kwargs[key] = [kwargs[key]]
             kwargs[key].extend(values)
         else:
@@ -89,7 +87,7 @@ def create_return_url(base, query, **kwargs):
     if part.query:
         for key, values in parse_qs(part.query).items():
             if key in kwargs:
-                if isinstance(kwargs[key], six.string_types):
+                if isinstance(kwargs[key], str):
                     kwargs[key] = [kwargs[key]]
                 kwargs[key].extend(values)
             else:
@@ -99,9 +97,9 @@ def create_return_url(base, query, **kwargs):
     else:
         _pre = base
 
-    logger.debug("kwargs: %s" % kwargs)
+    logger.debug(f"kwargs: {kwargs}")
 
-    return "%s?%s" % (_pre, url_encode_params(kwargs))
+    return f"{_pre}?{url_encode_params(kwargs)}"
 
 
 class UsernamePasswordMako(UserAuthnMethod):
@@ -146,7 +144,7 @@ class UsernamePasswordMako(UserAuthnMethod):
             "logo_url": logo_url,
             "query": query,
         }
-        logger.debug("do_authentication argv: %s" % argv)
+        logger.debug(f"do_authentication argv: {argv}")
         mte = self.template_lookup.get_template(self.mako_template)
         resp.message = mte.render(**argv)
         return resp
@@ -166,7 +164,7 @@ class UsernamePasswordMako(UserAuthnMethod):
         """
 
         # logger.debug("verify(%s)" % request)
-        if isinstance(request, six.string_types):
+        if isinstance(request, str):
             _dict = parse_qs(request)
         elif isinstance(request, dict):
             _dict = request
@@ -192,7 +190,7 @@ class UsernamePasswordMako(UserAuthnMethod):
         if cookie is None:
             return None
         else:
-            logger.debug("kwargs: %s" % kwargs)
+            logger.debug(f"kwargs: {kwargs}")
             try:
                 info, timestamp = parse_cookie(self.cookie_name, self.srv.seed, cookie)
                 if self.active[info] == timestamp:
@@ -225,7 +223,7 @@ class SocialService(UserAuthnMethod):
         return self.social.callback(server_env, cookie, sid, query, **kwargs)
 
 
-class AuthnMethodChooser(object):
+class AuthnMethodChooser:
     def __init__(self, methods=None):
         self.methods = methods
 

@@ -16,12 +16,12 @@ SHIB_SP_RELAY_STATE = """\
 ss:mem:ab1e6a31f3bd040ffd1d64a2d0e15d61ce517f5e1a94a41ea4fae32cc8d70a04"""
 
 
-class RelayStateHTMLParser(HTMLParser, object):
+class RelayStateHTMLParser(HTMLParser):
     """Class used to parse HTML from a HTTP-POST binding response
     and determine if the HTML includes the expected relay state."""
 
     def __init__(self, expected_relay_state):
-        super(RelayStateHTMLParser, self).__init__()
+        super().__init__()
 
         self.expected_relay_state = expected_relay_state
         self.expected_relay_state_found = False
@@ -65,7 +65,7 @@ def test_relay_state():
         # typical from a Shibboleth SP to create the HTML that carries
         # the SAML response.
         relay_state = SHIB_SP_RELAY_STATE
-        html = idp.apply_binding(BINDING_HTTP_POST, "%s" % resp, destination, relay_state)["data"]
+        html = idp.apply_binding(BINDING_HTTP_POST, f"{resp}", destination, relay_state)["data"]
 
         # Parse the HTML and verify that it contains the correct relay state.
         parser = RelayStateHTMLParser(relay_state)
@@ -74,7 +74,7 @@ def test_relay_state():
 
         # Apply the HTTP_POST binding to the response with relay state None.
         relay_state = None
-        html = idp.apply_binding(BINDING_HTTP_POST, "%s" % resp, destination, relay_state)["data"]
+        html = idp.apply_binding(BINDING_HTTP_POST, f"{resp}", destination, relay_state)["data"]
 
         # Parse the HTML and verify that it does not contain a relay state.
         parser = RelayStateHTMLParser(relay_state)
@@ -84,7 +84,7 @@ def test_relay_state():
         # Apply the HTTP_POST binding to the response with empty
         # string relay state.
         relay_state = ""
-        html = idp.apply_binding(BINDING_HTTP_POST, "%s" % resp, destination, relay_state)["data"]
+        html = idp.apply_binding(BINDING_HTTP_POST, f"{resp}", destination, relay_state)["data"]
 
         # Parse the HTML and verify that it does not contain a relay state.
         parser = RelayStateHTMLParser(relay_state)

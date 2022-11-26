@@ -1,18 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 
 """Tests for saml2.md"""
 
 __author__ = "roland.hedberg@umu.se (Roland Hedberg)"
-
-import unittest
-
-
-try:
-    from xml.etree import ElementTree
-except ImportError:
-    from elementtree import ElementTree
 
 import ds_data
 import md_data

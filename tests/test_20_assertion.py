@@ -1,6 +1,3 @@
-# coding=utf-8
-import copy
-
 from pathutils import full_path
 from pytest import raises
 

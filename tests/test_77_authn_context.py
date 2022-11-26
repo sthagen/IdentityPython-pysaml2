@@ -20,11 +20,9 @@ from saml2.authn_context import AuthnBroker
 from saml2.authn_context import authn_context_class_ref
 from saml2.authn_context import authn_context_decl_from_extension_elements
 from saml2.authn_context import authn_context_factory
-from saml2.authn_context import ppt
 from saml2.authn_context import pword
 from saml2.authn_context import requested_authn_context
 from saml2.saml import AuthnContext
-from saml2.saml import AuthnContextClassRef
 from saml2.saml import authn_context_from_string
 from saml2.samlp import RequestedAuthnContext
 
@@ -56,7 +54,7 @@ def test_factory():
 def test_authn_decl_in_authn_context():
     authnctxt = AuthnContext(authn_context_decl=ACD)
 
-    acs = authn_context_from_string("%s" % authnctxt)
+    acs = authn_context_from_string(f"{authnctxt}")
     if acs.extension_elements:
         cacd = authn_context_decl_from_extension_elements(acs.extension_elements)
         if cacd:
@@ -104,7 +102,7 @@ def test_authn_3():
         level += 4
         ac = authn_context_class_ref(ref)
 
-        authn.add(ac, REF2METHOD[ref], level, "https://www.example.com/%s" % "al%d" % level)
+        authn.add(ac, REF2METHOD[ref], level, f"https://www.example.com/{'al%d'}" % level)
 
     rac = requested_authn_context(AL1, "minimum")
 

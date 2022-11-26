@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """Contains base classes representing SAML elements.
 
@@ -18,28 +17,12 @@
 """
 
 import logging
+from xml.etree import ElementTree
 
-import six
+import defusedxml.ElementTree
 
 from saml2.validate import valid_instance
 from saml2.version import version as __version__
-
-
-try:
-    from xml.etree import cElementTree as ElementTree
-
-    if ElementTree.VERSION < "1.3.0":
-        # cElementTree has no support for register_namespace
-        # neither _namespace_map, thus we sacrify performance
-        # for correctness
-        from xml.etree import ElementTree
-except ImportError:
-    try:
-        import cElementTree as ElementTree
-    except ImportError:
-        from elementtree import ElementTree
-
-import defusedxml.ElementTree
 
 
 logger = logging.getLogger(__name__)
@@ -79,7 +62,7 @@ BINDING_URI = "urn:oasis:names:tc:SAML:2.0:bindings:URI"
 
 
 def class_name(instance):
-    return "%s:%s" % (instance.c_namespace, instance.c_tag)
+    return f"{instance.c_namespace}:{instance.c_tag}"
 
 
 def create_class_from_xml_string(target_class, xml_string):
@@ -96,7 +79,7 @@ def create_class_from_xml_string(target_class, xml_string):
         the contents of the XML - or None if the root XML tag and namespace did
         not match those of the target class.
     """
-    if not isinstance(xml_string, six.binary_type):
+    if not isinstance(xml_string, bytes):
         xml_string = xml_string.encode("utf-8")
     tree = defusedxml.ElementTree.fromstring(xml_string)
     return create_class_from_element_tree(target_class, tree)
@@ -126,7 +109,7 @@ def create_class_from_element_tree(target_class, tree, namespace=None, tag=None)
         namespace = target_class.c_namespace
     if tag is None:
         tag = target_class.c_tag
-    if tree.tag == "{%s}%s" % (namespace, tag):
+    if tree.tag == f"{{{namespace}}}{tag}":
         target = target_class()
         target.harvest_element_tree(tree)
         return target
@@ -137,14 +120,12 @@ def create_class_from_element_tree(target_class, tree, namespace=None, tag=None)
 class Error(Exception):
     """Exception class thrown by this module."""
 
-    pass
-
 
 class SAMLError(Exception):
     pass
 
 
-class ExtensionElement(object):
+class ExtensionElement:
     """XML which is not part of the SAML specification,
     these are called extension elements. If a classes parser
     encounters an unexpected XML construct, it is translated into an
@@ -184,7 +165,7 @@ class ExtensionElement(object):
         element_tree = ElementTree.Element("")
 
         if self.namespace is not None:
-            element_tree.tag = "{%s}%s" % (self.namespace, self.tag)
+            element_tree.tag = f"{{{self.namespace}}}{self.tag}"
         else:
             element_tree.tag = self.tag
 
@@ -300,7 +281,7 @@ def _extension_element_from_element_tree(element_tree):
     return extension
 
 
-class ExtensionContainer(object):
+class ExtensionContainer:
     c_tag = ""
     c_namespace = ""
 
@@ -464,8 +445,7 @@ class SamlBase(ExtensionContainer):
 
     def _get_all_c_children_with_order(self):
         if len(self.c_child_order) > 0:
-            for child in self.c_child_order:
-                yield child
+            yield from self.c_child_order
         else:
             for _, values in iter(self.__class__.c_children.items()):
                 yield values[0]
@@ -542,7 +522,7 @@ class SamlBase(ExtensionContainer):
         should not be called on in this class.
 
         """
-        new_tree = ElementTree.Element("{%s}%s" % (self.__class__.c_namespace, self.__class__.c_tag))
+        new_tree = ElementTree.Element(f"{{{self.__class__.c_namespace}}}{self.__class__.c_tag}")
         self._add_members_to_element_tree(new_tree)
         return new_tree
 
@@ -591,7 +571,7 @@ class SamlBase(ExtensionContainer):
         uri_set = self.get_ns_map(elements, set())
         prefix_map = {}
         for uri in sorted(uri_set):
-            prefix_map["encas%d" % len(prefix_map)] = uri
+            prefix_map[f"encas{len(prefix_map)}"] = uri
         return prefix_map
 
     def get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(self, assertion_tag, advice_tag):
@@ -632,7 +612,7 @@ class SamlBase(ExtensionContainer):
         uri_map = {}
         for prefix, uri in prefix_map.items():
             uri_map[uri] = prefix
-            elem.set("xmlns:" + prefix, uri)
+            elem.set(f"xmlns:{prefix}", uri)
 
         # fixup all elements in the tree
         memo = {}
@@ -648,7 +628,7 @@ class SamlBase(ExtensionContainer):
                     return
                 uri, tag = name[1:].split("}")
                 if uri in uri_map:
-                    new_name = uri_map[uri] + ":" + tag
+                    new_name = f"{uri_map[uri]}:{tag}"
                     memo[name] = new_name
                     return new_name
 
@@ -689,7 +669,7 @@ class SamlBase(ExtensionContainer):
     def __str__(self):
         # Yes this is confusing. http://bugs.python.org/issue10942
         x = self.to_string()
-        if not isinstance(x, six.string_types):
+        if not isinstance(x, str):
             x = x.decode("utf-8")
         return x
 
@@ -742,12 +722,12 @@ class SamlBase(ExtensionContainer):
             self.text = "true" if val else "false"
         elif isinstance(val, int):
             self.text = str(val)
-        elif isinstance(val, six.string_types):
+        elif isinstance(val, str):
             self.text = val
         elif val is None:
             pass
         else:
-            raise ValueError("Type shouldn't be '%s'" % val)
+            raise ValueError(f"Type shouldn't be '{val}'")
 
         return self
 
@@ -817,7 +797,7 @@ class SamlBase(ExtensionContainer):
                 continue
             svals = self.__dict__[key]
             ovals = other.__dict__[key]
-            if isinstance(svals, six.string_types):
+            if isinstance(svals, str):
                 if svals != ovals:
                     return False
             elif isinstance(svals, list):
