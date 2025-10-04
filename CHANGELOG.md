@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 7.5.3 (2025-10-04)
+
+- #973 Fix prepare_for_negotiated_authenticate to avoid double signing redirect requests
+
+
 ## 7.5.2 (2025-02-10)
 
 - Include the XSD of the XML Encryption Syntax and Processing Version 1.1 to the schema validator
