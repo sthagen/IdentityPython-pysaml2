@@ -1,10 +1,10 @@
-[tool.poetry]
+[project]
 name = "pysaml2"
 version = "7.5.3"
 description = "Python implementation of SAML Version 2 Standard"
 license = "Apache-2.0"
-authors = ["IdentityPython <discuss@idpy.org>"]
-maintainers = ["IdentityPython <discuss@idpy.org>"]
+authors = [{name = "IdentityPython", email = "discuss@idpy.org"}]
+maintainers = [{name = "IdentityPython", email = "discuss@idpy.org"}]
 readme = "README.md"
 homepage = "https://idpy.org"
 repository = "https://github.com/IdentityPython/pysaml2"
@@ -21,37 +21,40 @@ keywords = [
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+requires-python = "^3.9"
+dependencies = [
+  "cryptography >=3.1",
+  "defusedxml",
+  "importlib-metadata >=1.7.0; python_version < '3.8'",
+  "importlib-resources; python_version < '3.9'",
+  "pyopenssl <24.3.0",
+  "python-dateutil",
+  "pytz",
+  "requests >=2.0.0,<3.0.0",  # ^2 means compatible with 2.x
+  "xmlschema >=2.0.0,<3.0.0"
+]
+
+[project.optional-dependencies]
+s2repoze = [
+  "paste",
+  "repoze.who",
+  "zope.interface"
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/IdentityPython/pysaml2/issues"
+
+[tool.poetry]
 packages = [
     { include = "saml2", from = "src" },
     { include = "saml2test", from = "src" },
 ]
 
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/IdentityPython/pysaml2/issues"
-
-[tool.poetry.scripts]
+[project.scripts]
 make_metadata = "saml2.tools.make_metadata:main"
 mdexport = "saml2.tools.mdexport:main"
 merge_metadata = "saml2.tools.merge_metadata:main"
 parse_xsd2 = "saml2.tools.parse_xsd2:main"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-cryptography = ">=3.1"
-defusedxml = "*"
-importlib-metadata = {version = ">=1.7.0", python = "<3.8"}
-importlib-resources = {python = "<3.9", version = "*"}
-paste = {optional = true, version = "*"}
-pyopenssl = "<24.3.0"
-python-dateutil = "*"
-pytz = "*"
-"repoze.who" = {optional = true, version = "*"}
-requests = "^2"
-xmlschema = "^2"
-"zope.interface" = {optional = true, version = "*"}
-
-[tool.poetry.extras]
-s2repoze = ["paste", "repoze-who", "zope-interface"]
 
 [tool.poetry.group.dev]
 optional = true
