@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v7.5.4 (2025-10-07)
+
+- Minor refactor to handle `shelve.open` and `dbm` errors
+- Remove import of deprecated `cgi` module
+- Replace deprecated `datetime.utcnow()` by `datetime.now(timezone.utc)`
+- deps: Remove the `importlib_metadata` dependency
+- deps: Remove the `importlib_resources` dependency
+- deps: Update dependency versions and lockfile
+- build: Update pyproject and lockfile to be compatible with PEP 621
+- docs: Correct spelling mistakes
+- docs: Fix interal references/links
+- docs: Clarify units for accepted_time_diff config param
+- docs: Correct documentation for contact_person
+
+
 ## 7.5.3 (2025-10-04)
 
 - #973 Fix prepare_for_negotiated_authenticate to avoid double signing redirect requests

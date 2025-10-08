@@ -1,14 +1,11 @@
 [project]
 name = "pysaml2"
-version = "7.5.3"
+version = "7.5.4"
 description = "Python implementation of SAML Version 2 Standard"
 license = "Apache-2.0"
 authors = [{name = "IdentityPython", email = "discuss@idpy.org"}]
 maintainers = [{name = "IdentityPython", email = "discuss@idpy.org"}]
 readme = "README.md"
-homepage = "https://idpy.org"
-repository = "https://github.com/IdentityPython/pysaml2"
-documentation = "https://pysaml2.readthedocs.io"
 keywords = [
     "saml",
     "saml2",
@@ -21,7 +18,7 @@ keywords = [
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = "^3.9"
+requires-python = ">= 3.9"
 dependencies = [
   "cryptography >=3.1",
   "defusedxml",
@@ -39,7 +36,12 @@ s2repoze = [
 ]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/IdentityPython/pysaml2/issues"
+Homepage = "https://idpy.org"
+Documentation = "https://pysaml2.readthedocs.io"
+Repository = "https://github.com/IdentityPython/pysaml2"
+Issues = "https://github.com/IdentityPython/pysaml2/issues"
+Changelog = "https://github.com/IdentityPython/pysaml2/blob/master/CHANGELOG.md"
+
 
 [tool.poetry]
 packages = [

@@ -2072,5 +2072,5 @@ s2repoze = ["paste", "repoze.who", "zope.interface"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.9"
-content-hash = "08eae4c86f73876517dfd1574f6766406c3a70f1d5bc656eabcf7e34e5b6b52e"
+python-versions = ">= 3.9"
+content-hash = "04b0c0e0efb4781e75bd015e82e23592fb454f9bdeb42507a18c9e5a18d30029"

@@ -296,8 +296,8 @@ Example::
     key_file: "key.pem"
 
 *key_file* is the name of a PEM formatted file that contains the private key
-of the service. This is currently used both to encrypt/sign assertions and as
-the client key in an HTTPS session.
+of the service. This is currently used both to sign assertions and as
+the client key in an HTTPS (mutual TLS) session.
 
 cert_file
 ^^^^^^^^^
@@ -328,7 +328,14 @@ Example::
 encryption_keypairs
 ^^^^^^^^^^^^^^^^^^^
 
-Indicates which certificates will be used for encryption capabilities::
+A list of dictionaries, each containing paths to the private and public keys
+used for encryption. The *key_file* refers to the PEM-formatted file that
+contains the private key for the service, while the *cert_file* refers to the
+corresponding public key (certificate) from the service's key pair. Both files
+must be in PEM format, and the *cert_file* should contain only a single
+certificate.
+
+Example::
 
     # Encryption
     'encryption_keypairs': [
